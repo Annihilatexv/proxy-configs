@@ -1,4 +1,4 @@
-#!name=本机开发服务回环 (LocalDevVPN 替代)
+#!name=Jambo-本机开发服务回环
 #!desc=用 include-tun + IP Rewrite reflect 在设备内建立 loopback 隧道，供 StikDebug / SideStore / WrapPin 等连接本机开发者服务（默认 10.7.0.1）。流量不出设备、不经代理节点。
 #!author=WorkBuddy
 #!icon=https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/f9/0c/c0/f90cc0a7-6cf8-902c-11ce-5e5fa4ea2731/AppIcon-0-1x_U007epad-0-1-85-220-0.png/512x512bb.png

@@ -4,10 +4,10 @@
 
 ## 插件
 
-- [签到任务合集](https://raw.githubusercontent.com/Annihilatexv/proxy-configs/main/loon/plugins/mytask.plugin)
-- [去广告合集](https://raw.githubusercontent.com/Annihilatexv/proxy-configs/main/loon/plugins/removeAD.plugin)
-- [应用解锁合集](https://raw.githubusercontent.com/Annihilatexv/proxy-configs/main/loon/plugins/unlock.plugin)（迁移时默认停用）
-- [本机开发服务回环](https://raw.githubusercontent.com/Annihilatexv/proxy-configs/main/loon/plugins/localdevvpn-loopback.plugin)（Loon 3.5.3 Build 1007+，TUN Only）
+- [签到任务合集](https://raw.githubusercontent.com/Annihilatexv/proxy-configs/main/loon/plugins/jambo_signin.plugin)
+- [去广告合集](https://raw.githubusercontent.com/Annihilatexv/proxy-configs/main/loon/plugins/jambo_ad_cleaner.plugin)
+- [应用解锁合集](https://raw.githubusercontent.com/Annihilatexv/proxy-configs/main/loon/plugins/jambo_app_tools.plugin)（迁移时默认停用）
+- [本机开发服务回环](https://raw.githubusercontent.com/Annihilatexv/proxy-configs/main/loon/plugins/jambo_localdev_loopback.plugin)（Loon 3.5.3 Build 1007+，TUN Only）
 
 签到合集所需的酷我积分和深圳一卡通脚本位于 `loon/scripts/`，插件使用绝对 Raw URL 引用。其他第三方脚本继续使用原作者地址。
 
