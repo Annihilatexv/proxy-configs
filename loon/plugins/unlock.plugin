@@ -1,0 +1,135 @@
+#!name=应用解锁合集(配置版)
+#!desc=整合各类App的VIP解锁及实用脚本。支持在UI界面独立控制每个脚本的开启与关闭。
+#!author=WeiGiegie & App2smile & 𝐎𝐍𝐙𝟑𝐕 & 彭于晏💞 & 自用
+#!homepage=https://github.com/Yuheng0101/X
+#!icon=https://raw.githubusercontent.com/Sliverkiss/QuantumultX/main/icon/unlock.png
+#!system=iOS, iPadOS
+#!loon_version=3.2.1(733)
+#!date=2026-06-14 10:00:00
+
+#############################################
+# ⚙️ 配置区域
+#############################################
+
+[Argument]
+
+# >>>>>>>>> 京东比价 (J) <<<<<<<<<
+JD_Price_Switch = switch, true, tag=京东比价-开启开关, desc=在商品详情页显示历史价格走势
+
+# >>>>>>>>> Nicegram (N) <<<<<<<<<
+Nicegram_Switch = switch, true, tag=Nicegram-解锁开关, desc=开启后解锁Premium并去除广告 (需配置下方参数)
+Nicegram_Points = input, "9999", tag=Nicegram-积分数量, desc=自定义积分数量 (attPoints)，默认9999
+Nicegram_Gems = input, "9999", tag=Nicegram-宝石数量, desc=自定义宝石数量 (gems)，默认9999
+
+# >>>>>>>>> PikPak (P) <<<<<<<<<
+PikPak_Enhance_Switch = switch, true, tag=PikPak-功能增强, desc=解决大陆无法使用问题
+
+# >>>>>>>>> 搜图神器 (S) <<<<<<<<<
+SouTu_Switch = switch, true, tag=搜图神器-解锁开关, desc=开启后解锁VIP功能
+
+# >>>>>>>>> Spotify (S) <<<<<<<<<
+Spotify_Switch = switch, true, tag=Spotify-解锁开关, desc=去除广告/切歌限制 (建议登录后再开，若无效请重启App)
+
+# >>>>>>>>> Turrit (T) <<<<<<<<<
+Turrit_Enhance_Switch = switch, true, tag=Turrit-功能增强, desc=开启后点击 t.me 链接自动跳转至 Turrit
+
+# >>>>>>>>> 熊猫助眠 (X) <<<<<<<<<
+XMSM_Switch = switch, true, tag=熊猫助眠-解锁开关, desc=开启后解锁VIP课程与会员功能
+
+# >>>>>>>>> 小湿妹 (X) <<<<<<<<<
+Xiaoshimei_Switch = switch, true, tag=小湿妹-解锁开关, desc=开启后解锁金币/VIP视频并去除广告
+
+
+#############################################
+# 🛡️ 规则区域 (域名屏蔽)
+#############################################
+
+[Rule]
+# Nicegram 广告屏蔽
+DOMAIN,static-cf.nicegram.app,REJECT
+DOMAIN,image.adsgram.me,REJECT
+DOMAIN,api.adsgram.ai,REJECT
+DOMAIN,relay.walletconnect.com,REJECT
+DOMAIN,verify.walletconnect.org,REJECT
+DOMAIN,firebaseremoteconfig.googleapis.com,REJECT
+DOMAIN,firebase-settings.crashlytics.com,REJECT
+DOMAIN,firebaseinstallations.googleapis.com,REJECT
+
+
+#############################################
+# 🚫 复写区域 (URL屏蔽/Mock/Body修改)
+#############################################
+
+[Rewrite]
+# 搜图神器 - 首页弹窗屏蔽 & Body修改
+^http?:\/\/wallpaper\.soutushenqi\.com\/v\d\/home\/dialog reject-200
+^http?:\/\/wallpaper.soutushenqi.com\/v\d\/config request-body config_key=stsq_ios_home_vipI config_key=
+
+# 小湿妹 - 广告屏蔽
+^https?:\/\/b100\.vaowujej\.com\/ reject-200
+^https?:\/\/[^\/]+\/upload_01\/ads\/ reject-200
+^https?:\/\/[^\/]+\/upload\/ads\/ reject-200
+
+# > Turrit - TG外链接跳转 (307)
+^https?:\/\/t.me\/(.+) turrit://resolve?domain=$1 307
+
+# > PikPak - 解决大陆无法使用问题
+^https?:\/\/access\.mypikpak\.com\/access_controller - reject-200
+
+
+#############################################
+# 📜 脚本区域
+#############################################
+
+[Script]
+
+# >>>>>>>>>>>>>>> ✅ J ✅ <<<<<<<<<<<<<<
+
+# > 京东比价 - 历史价格走势
+http-response ^https?:\/\/in\.m\.jd\.com\/product\/graphext\/\d+\.html script-path=https://raw.githubusercontent.com/WeiGiegie/666/main/bijia.js, requires-body=true, timeout=60, tag=京东-历史价格比价, enable={JD_Price_Switch}, img-url=https://raw.githubusercontent.com/Orz-3/mini/master/Color/JD.png
+
+
+# >>>>>>>>>>>>>>> ✅ N ✅ <<<<<<<<<<<<<<
+
+# > Nicegram Premium 𝕏
+http-response ^https?:\/\/nicegram\.cloud\/api\/v\d+\/(ai-assistant\/purchase-list|telegram\/auth|user\/info|unblock-feature|adsgram\/get-banner|att\/scroll-to-earn\/user-info|att\/scroll-to-earn\/config|att\/scroll-to-earn\/ads-list|airdrop\/task-list) script-path=https://he2o.vercel.app/Resource/Plugin/Nicegram.js, requires-body=true, timeout=60, tag=Nicegram-Premium解锁, enable={Nicegram_Switch}, argument=[{Nicegram_Points},{Nicegram_Gems}], img-url=https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/95/08/31/9508311c-9e94-3038-b267-5d4c8e39cb21/AppIconLLC-0-0-1x_U007epad-0-1-0-85-220.png/460x0w.webp
+
+
+# >>>>>>>>>>>>>>> ✅ ST ✅ <<<<<<<<<<<<<<
+
+# > 搜图神器 - VIP解锁
+http-response ^http?:\/\/wallpaper.soutushenqi.com\/v\d\/config script-path=https://ddgksf2013.top/scripts/soutushenqi.vip.js, requires-body=true, timeout=60, tag=搜图神器-Config解锁, enable={SouTu_Switch}, img-url=https://raw.githubusercontent.com/Orz-3/mini/master/Color/SouTuShenQi.png
+
+http-response ^http?:\/\/wallpaper\.soutushenqi\.com\/api\/v\d\/account script-path=https://ddgksf2013.top/scripts/soutushenqi.vip.js, requires-body=true, timeout=60, tag=搜图神器-Account解锁, enable={SouTu_Switch}, img-url=https://raw.githubusercontent.com/Orz-3/mini/master/Color/SouTuShenQi.png
+
+
+# >>>>>>>>>>>>>>> ✅ S ✅ <<<<<<<<<<<<<<
+
+# > Spotify - Request Header
+http-request ^https:\/\/(spclient\.wg\.spotify\.com|.*-spclient\.spotify\.com(:443)?)\/user-customization-service\/v1\/customize$ script-path=https://raw.githubusercontent.com/app2smile/rules/master/js/spotify-qx-header.js, timeout=60, tag=Spotify-Header处理, enable={Spotify_Switch}
+
+# > Spotify - Response Body
+http-response ^https:\/\/(spclient\.wg\.spotify\.com|.*-spclient\.spotify\.com(:443)?)\/(bootstrap\/v1\/bootstrap|user-customization-service\/v1\/customize)$ script-path=https://raw.githubusercontent.com/app2smile/rules/master/js/spotify-proto.js, requires-body=true, timeout=60, tag=Spotify-Proto处理, enable={Spotify_Switch}
+
+# > Spotify - Request Header (Artist/Album)
+http-request ^https:\/\/(spclient\.wg\.spotify\.com|.*-spclient\.spotify\.com(:443)?)\/(artistview\/v1\/artist|album-entity-view\/v2\/album)\/ script-path=https://raw.githubusercontent.com/app2smile/rules/master/js/spotify-json.js, timeout=60, tag=Spotify-JSON处理, enable={Spotify_Switch}
+
+
+# >>>>>>>>>>>>>>> ✅ X ✅ <<<<<<<<<<<<<<
+
+# > 熊猫助眠 & 课程 + 会员解锁
+http-response ^https?:\/\/sleep\.navolove\.com\/api\/(refresh_user_info\?|get_ad_list).*$ script-path=https://raw.githubusercontent.com/WeiGiegie/666/main/xmsm.js, requires-body=true, timeout=60, tag=熊猫助眠-VIP解锁, enable={XMSM_Switch}
+
+# > 小湿妹 - 视频解锁 (Request)
+http-request ^https:\/\/[^\/]*\..*\.cn\/\w+\/[a-z0-9]{32}\/[a-z0-9]{32}\.m3u8(\?.*)? script-path=https://raw.githubusercontent.com/89996462/Quantumult-X/main/ghs/xsm.js, timeout=60, tag=小湿妹-抓包解锁, enable={Xiaoshimei_Switch}, img-url=https://raw.githubusercontent.com/Sliverkiss/QuantumultX/main/icon/unlock.png
+
+# > 小湿妹 - 去广告净化 (Response)
+http-response ^https?:\/\/[^\/]+\/api\.php\/api\/ script-path=https://raw.githubusercontent.com/89996462/Quantumult-X/main/ghs/xsmad.js, requires-body=true, timeout=60, tag=小湿妹-净化拦截, enable={Xiaoshimei_Switch}, img-url=https://raw.githubusercontent.com/Sliverkiss/QuantumultX/main/icon/no_ad.png
+
+
+#############################################
+# 🕵️ MITM 区域
+#############################################
+
+[MITM]
+hostname = sleep.navolove.com, spclient.wg.spotify.com, *.spclient.spotify.com, nicegram.cloud, wallpaper.soutushenqi.com, in.m.jd.com, xxz-xyzw-res.hortorgames.com, t.me, access.mypikpak.com, p5.qgdziagen.cc, p5.qgdziaqen.cc, *.qgdziagen.cc, *.qgdziaqen.cc, api1.xiaosm1.com, api2.xiaosm1.com, *.xiaosm1.com, new.cttvvs.cn, *.cttvvs.cn, tp4.cttvvs.cn, tp5.cttvvs.cn, tp6.cttvvs.cn, tp7.cttvvs.cn, 120play.*.cn, long.*.cn, 10play.*.cn, *.aibxqo.cn

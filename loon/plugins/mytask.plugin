@@ -1,0 +1,191 @@
+#!name=签到任务合集(配置版)
+#!desc=整合天翼云盘、移动云盘、酷我音乐、蜜雪冰城、奶茶多合一、有赞签到盒、同程旅行、深圳城市一卡通、恰货铺子、WPS、小米商城、网易严选。支持在UI界面独立控制各个任务的开关及执行时间。
+#!author=MCdasheng & General74110 & Sliverkiss & chavyleung & Yuheng0101
+#!homepage=https://github.com/Sliverkiss/QuantumultX
+#!icon=https://raw.githubusercontent.com/deezertidal/private/main/icons/kuwosvip.png
+#!category=自用模块
+#!system=iOS, iPadOS
+#!loon_version=3.2.1(733)
+#!date=2026-10-01 13:10:00
+
+#############################################
+
+[Argument]
+
+# >>>>>>>>> 酷我音乐设置 (K) <<<<<<<<<
+KW_Cookie_Switch = switch, true, tag=酷我-抓取开关, desc=首次使用请开启，在网页版登录酷我(切换桌面模式)获取Cookie。
+KW_Points_Switch = switch, true, tag=酷我-积分任务开关, desc=日常签到、抽奖、听歌任务。
+KW_Points_Cron = input, "*/30 * * * *", tag=酷我-积分Cron, desc=执行时间 (建议每30分钟或1小时)
+KW_Time_Switch = switch, true, tag=酷我-时长任务开关, desc=刷听歌时长任务，建议仅在夜间开启。
+KW_Time_Cron = input, "3 6 * * *", tag=酷我-时长Cron, desc=执行时间 (默认每天早上6:03)
+tz = select, "1", "0", tag=酷我-消息通知, desc=通知设置：1为开启通知，0为关闭通知
+
+
+# >>>>>>>>> 蜜雪冰城设置 (M) <<<<<<<<<
+MX_Token_Switch = switch, true, tag=蜜雪-抓取开关, desc=开启后打开蜜雪冰城小程序或App获取Token。
+MX_Task_Switch = switch, true, tag=蜜雪-任务开关, desc=是否启用蜜雪冰城每日任务。
+MX_Cron_Time = input, "0 1 * * *", tag=蜜雪-执行时间, desc=Cron表达式 (默认每天凌晨1点)
+
+
+# >>>>>>>>> 奶茶多合一设置 (N) <<<<<<<<<
+# 支持霸王茶姬、沪上阿姨、益禾堂等企迈系小程序
+NC_Token_Switch = switch, true, tag=奶茶-抓取开关, desc=开启后打开对应小程序(如霸王茶姬)即可获取Token。
+NC_Task_Switch = switch, true, tag=奶茶-任务开关, desc=是否启用奶茶多合一签到任务。
+NC_Cron_Time = input, "10 9 * * *", tag=奶茶-执行时间, desc=Cron表达式 (默认每天上午9:10)
+
+
+# >>>>>>>>> 天翼云盘设置 (T) <<<<<<<<<
+TY_Cookie_Switch = switch, true, tag=天翼-抓取开关, desc=开启后打开天翼云盘App获取Cookie，平时建议关闭
+TY_Task_Switch = switch, true, tag=天翼-任务开关, desc=是否启用天翼云盘的每日签到
+TY_Cron_Time = input, "0 9 * * *", tag=天翼-执行时间, desc=Cron表达式 (默认每天上午9点)
+
+
+# >>>>>>>>> 同程旅行设置 (T) <<<<<<<<<
+TC_Cookie_Switch = switch, true, tag=同程-抓取开关, desc=开启后打开同程旅行APP→领福利，获取成功后建议关闭。
+TC_Task_Switch = switch, true, tag=同程-任务开关, desc=是否启用同程旅行的每日签到。
+TC_Cron_Time = input, "5 12 * * *", tag=同程-执行时间, desc=Cron表达式 (默认每天中午12:05)
+
+
+# >>>>>>>>> 深圳城市一卡通设置 (S) <<<<<<<<<
+SZ_Capture_Switch = switch, true, tag=深圳一卡通-抓取开关, desc=开启后进入App签到页面即可，无需点击签到；获取成功后建议关闭。
+SZ_Task_Switch = switch, true, tag=深圳一卡通-任务开关, desc=是否启用深圳城市一卡通每日签到。
+SZ_Cron_Time = input, "15 8 * * *", tag=深圳一卡通-执行时间, desc=Cron表达式 (默认每天上午8:15)
+
+
+# >>>>>>>>> 移动云盘设置 (Y) <<<<<<<<<
+YD_Cookie_Switch = switch, true, tag=移动云盘-抓取开关, desc=开启后打开移动云盘App即可获取Cookie，平时建议关闭。
+YD_Task_Switch = switch, true, tag=移动云盘-任务开关, desc=是否启用中国移动云盘的每日签到。
+YD_Cron_Time = input, "0 8 * * *", tag=移动云盘-执行时间, desc=Cron表达式 (默认每天上午8点)
+
+
+# >>>>>>>>> 有赞签到盒设置 (Y) <<<<<<<<<
+YZ_Token_Switch = switch, true, tag=有赞-抓取开关, desc=开启后打开有赞相关活动页面获取Token。
+YZ_Task_Switch = switch, true, tag=有赞-任务开关, desc=是否启用有赞签到盒每日任务。
+YZ_Cron_Time = input, "30 8 * * *", tag=有赞-执行时间, desc=Cron表达式 (默认每天上午8:30)
+
+# >>>>>>>>> WPS 设置 (W) <<<<<<<<<
+WPS_Cookie_Switch = switch, true, tag=WPS-抓取开关, desc=开启后访问WPS活动页面获取Cookie，获取成功后建议关闭。
+WPS_Task_Switch = switch, true, tag=WPS-任务开关, desc=是否启用WPS每日签到任务。
+WPS_Cron_Time = input, "0 10 * * *", tag=WPS-执行时间, desc=Cron表达式 (默认每天上午10点)
+
+# >>>>>>>>> 小米商城设置 (X) <<<<<<<<<
+MI_Cookie_Switch = switch, true, tag=小米商城-抓取开关, desc=开启后进入小米商城活动页面获取Cookie，获取成功后建议关闭。
+MI_Task_Switch = switch, true, tag=小米商城-任务开关, desc=是否启用小米商城每日签到任务。
+MI_Cron_Time = input, "15 8 * * *", tag=小米商城-执行时间, desc=Cron表达式 (默认每天上午8:15)
+
+# >>>>>>>>> 恰货铺子设置 (Q) <<<<<<<<<
+QHPZ_Token_Switch = switch, true, tag=恰货铺子-抓取开关, desc=开启后进入恰货铺子小程序或活动页面获取账号信息，获取成功后建议关闭。
+QHPZ_Task_Switch = switch, true, tag=恰货铺子-任务开关, desc=是否启用恰货铺子每日签到任务。
+QHPZ_Cron_Time = input, "9 8 * * *", tag=恰货铺子-执行时间, desc=Cron表达式 (默认每天上午8:09)
+
+
+# >>>>>>>>> 网易严选设置 (YX) <<<<<<<<<
+YX_Cookie_Switch = switch, true, tag=严选-抓取开关, desc=开启后打开网易严选签到活动页获取Cookie，获取成功后建议关闭。
+YX_Task_Switch = switch, true, tag=严选-任务开关, desc=是否启用网易严选每日签到任务。
+YX_Cron_Time = input, "10 9 * * *", tag=严选-执行时间, desc=Cron表达式 (默认每天上午9:10)
+
+
+#############################################
+
+[Script]
+
+# >>>>>>>>>>>>>>> ✅ K ✅ <<<<<<<<<<<<<<
+
+# > 酷我音乐 - 获取Cookie
+http-request ^https:\/\/.*\/(newh5app\/singers\/0\?|openapi\/v1\/www\/search\/searchKey\?) script-path=https://raw.githubusercontent.com/General74110/Scripts/master/Script/Task/kuwo_Cookies.js, requires-body=true, timeout=60, tag=酷我音乐-获取Cookie, enable={KW_Cookie_Switch}, img-url=https://raw.githubusercontent.com/deezertidal/private/main/icons/kuwosvip.png
+
+# > 酷我音乐 - 积分任务
+cron {KW_Points_Cron} script-path=https://raw.githubusercontent.com/Annihilatexv/proxy-configs/main/loon/scripts/kuwo_points.js, timeout=600, tag=酷我音乐-积分任务, enable={KW_Points_Switch}, img-url=https://raw.githubusercontent.com/deezertidal/private/main/icons/kuwosvip.png
+
+# > 酷我音乐 - 时长任务
+cron {KW_Time_Cron} script-path=https://raw.githubusercontent.com/General74110/Scripts/master/Script/Task/Kuwomusic.js, timeout=3600, tag=酷我音乐-刷时长, enable={KW_Time_Switch}, img-url=https://raw.githubusercontent.com/deezertidal/private/main/icons/kuwosvip.png
+
+
+# >>>>>>>>>>>>>>> ✅ M ✅ <<<<<<<<<<<<<<
+
+# > 蜜雪冰城 - 获取Token
+http-response ^https:\/\/mxsa\.mxbc\.net\/api\/v1\/customer\/info script-path=https://gist.githubusercontent.com/Sliverkiss/865c82e42a5730bb696f6700ebb94cee/raw/mxbc.js, requires-body=true, timeout=60, tag=蜜雪冰城-获取Token, enable={MX_Token_Switch}, img-url=https://raw.githubusercontent.com/sliverkiss/QuantumultX/main/icon/mxbc.png
+
+# > 蜜雪冰城 - 每日任务
+cron {MX_Cron_Time} script-path=https://gist.githubusercontent.com/Sliverkiss/865c82e42a5730bb696f6700ebb94cee/raw/mxbc.js, timeout=60, tag=蜜雪冰城-每日任务, enable={MX_Task_Switch}, img-url=https://raw.githubusercontent.com/sliverkiss/QuantumultX/main/icon/mxbc.png
+
+
+# >>>>>>>>>>>>>>> ✅ N ✅ <<<<<<<<<<<<<<
+
+# > 奶茶多合一 - 获取Token (登录/刷新)
+http-response ^https:\/\/(webapi|webapi2)\.qmai\.cn\/web\/seller\/(oauth\/flash-sale-login|account\/login-minp) script-path=https://gist.githubusercontent.com/Sliverkiss/8b4f5487e0f28786c7dec9c7484dcd5e/raw/teaMilk.js, requires-body=true, timeout=60, tag=奶茶多合一-登录Token, enable={NC_Token_Switch}, img-url=https://raw.githubusercontent.com/Sliverkiss/QuantumultX/main/icon/nc.png
+
+# > 奶茶多合一 - 获取Token (签到动作)
+http-request ^https:\/\/(webapi|webapi2|qmwebapi)\.qmai\.cn\/web\/(catering\/integral|cmk-center)\/sign\/(signIn|takePartInSign) script-path=https://gist.githubusercontent.com/Sliverkiss/8b4f5487e0f28786c7dec9c7484dcd5e/raw/teaMilk.js, requires-body=true, timeout=60, tag=奶茶多合一-签到Token, enable={NC_Token_Switch}, img-url=https://raw.githubusercontent.com/Sliverkiss/QuantumultX/main/icon/nc.png
+
+# > 奶茶多合一 - 每日任务
+cron {NC_Cron_Time} script-path=https://gist.githubusercontent.com/Sliverkiss/8b4f5487e0f28786c7dec9c7484dcd5e/raw/teaMilk.js, timeout=120, tag=奶茶多合一-每日任务, enable={NC_Task_Switch}, img-url=https://raw.githubusercontent.com/Sliverkiss/QuantumultX/main/icon/nc.png
+
+
+# >>>>>>>>>>>>>>> ✅ T ✅ <<<<<<<<<<<<<<
+
+# > 天翼云盘 - 获取Cookie
+http-request ^https:\/\/api\.cloud\.189\.cn\/mkt\/userSign\.action script-path=https://raw.githubusercontent.com/MCdasheng/QuantumultX/main/Scripts/myScripts/ty.cookie.js, timeout=60, tag=天翼云盘-获取Cookie, enable={TY_Cookie_Switch}, img-url=https://raw.githubusercontent.com/Sliverkiss/QuantumultX/main/icon/Tyyp.png
+
+# > 天翼云盘 - 每日签到
+cron {TY_Cron_Time} script-path=https://raw.githubusercontent.com/MCdasheng/QuantumultX/main/Scripts/myScripts/ty.js, timeout=60, tag=天翼云盘-每日签到, enable={TY_Task_Switch}, img-url=https://raw.githubusercontent.com/Sliverkiss/QuantumultX/main/icon/Tyyp.png
+
+# > 同程旅行 - 获取Cookie
+http-request ^https:\/\/app\.17u\.cn\/welfarecenter\/index\/signIndex script-path=https://raw.githubusercontent.com/chavyleung/scripts/master/tongcheng-trip/tongcheng-trip.js, timeout=60, tag=同程旅行-获取Cookie, enable={TC_Cookie_Switch}, img-url=https://raw.githubusercontent.com/Orz-3/mini/master/Color/tongcheng.png
+
+# > 同程旅行 - 每日签到
+cron {TC_Cron_Time} script-path=https://raw.githubusercontent.com/chavyleung/scripts/master/tongcheng-trip/tongcheng-trip.js, timeout=300, tag=同程旅行-每日签到, enable={TC_Task_Switch}, img-url=https://raw.githubusercontent.com/Orz-3/mini/master/Color/tongcheng.png
+
+# > 深圳城市一卡通 - 进入签到页面时获取凭证（无需点击签到）
+http-response ^https:\/\/cstapp\.17u\.cn\/cstapi\/activity\/sign\/record(?:\?.*)?$ script-path=https://raw.githubusercontent.com/Annihilatexv/proxy-configs/main/loon/scripts/sz_card_sign.js, requires-body=true, timeout=30, tag=深圳一卡通-获取凭证, enable={SZ_Capture_Switch}, img-url=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Bus.png
+
+# > 深圳城市一卡通 - 每日签到
+cron {SZ_Cron_Time} script-path=https://raw.githubusercontent.com/Annihilatexv/proxy-configs/main/loon/scripts/sz_card_sign.js, timeout=60, tag=深圳一卡通-每日签到, enable={SZ_Task_Switch}, img-url=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Bus.png
+
+
+# >>>>>>>>>>>>>>> ✅ Y ✅ <<<<<<<<<<<<<<
+
+# > 移动云盘 - 获取Cookie
+http-request ^https?:\/\/user-njs\.yun\.139\.com\/user\/getUser script-path=https://raw.githubusercontent.com/Yuheng0101/X/main/Tasks/cloud139/dist/capture.js, timeout=60, tag=移动云盘-获取Cookie, enable={YD_Cookie_Switch}, img-url=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/ChinaMobile.png
+
+# > 移动云盘 - 每日签到
+cron {YD_Cron_Time} script-path=https://raw.githubusercontent.com/Yuheng0101/X/main/Tasks/cloud139/dist/cloud139.js, timeout=120, tag=移动云盘-每日任务, enable={YD_Task_Switch}, img-url=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/ChinaMobile.png
+
+# > 有赞签到盒 - 获取Token
+http-response ^https:\/\/h5\.youzan\.com\/wscump\/checkin\/get_activity_by_yzuid_v2\.json.+ script-path=https://gist.githubusercontent.com/Sliverkiss/585daf69a0a6c7243db8993f5394a124/raw/youzan.js, timeout=300, tag=有赞签到盒-获取Token, enable={YZ_Token_Switch}, img-url=https://raw.githubusercontent.com/Sliverkiss/QuantumultX/main/icon/youzan.png
+
+# > 有赞签到盒 - 每日任务
+cron {YZ_Cron_Time} script-path=https://gist.githubusercontent.com/Sliverkiss/585daf69a0a6c7243db8993f5394a124/raw/youzan.js, timeout=300, tag=有赞签到盒-每日任务, enable={YZ_Task_Switch}, img-url=https://raw.githubusercontent.com/Sliverkiss/QuantumultX/main/icon/youzan.png
+
+# > WPS - 获取Cookie
+http-request ^https:\/\/personal-act\.wps\.cn\/activity-rubik\/activity\/page_info tag=WPS Cookie, script-path=https://raw.githubusercontent.com/MaYIHEI/paperclip/refs/heads/main/app/wps/wps.cookie.js, requires-body=false, enable={WPS_Cookie_Switch}, img-url=https://raw.githubusercontent.com/MaYIHEI/pin/refs/heads/main/app/wps.png
+
+# > WPS - 每日签到
+cron {WPS_Cron_Time} script-path=https://raw.githubusercontent.com/MaYIHEI/paperclip/refs/heads/main/app/wps/wps.js, tag=WPS签到, img-url=https://raw.githubusercontent.com/MaYIHEI/pin/refs/heads/main/app/wps.png, enable={WPS_Task_Switch}
+
+# > 小米商城 - 获取Cookie
+http-request ^https:\/\/shop-api\.retail\.mi\.com\/mtop\/mf\/act\/infinite\/(do|done) tag=小米商城 Cookie, script-path=https://raw.githubusercontent.com/MaYIHEI/paperclip/refs/heads/main/app/mishop/mishop.cookie.js, requires-body=false, enable={MI_Cookie_Switch}, img-url=https://raw.githubusercontent.com/MaYIHEI/pin/refs/heads/main/app/mishop.png
+
+# > 小米商城 - 每日签到
+cron {MI_Cron_Time} script-path=https://raw.githubusercontent.com/MaYIHEI/paperclip/refs/heads/main/app/mishop/mishop.js, tag=小米商城签到, img-url=https://raw.githubusercontent.com/MaYIHEI/pin/refs/heads/main/app/mishop.png, enable={MI_Task_Switch}
+
+# >>>>>>>>>>>>>>> ✅ Q ✅ <<<<<<<<<<<<<<
+
+# > 恰货铺子 - 获取账号信息
+http-response ^https:\/\/crm-qhpz\.qhpzls\.com\/capp-web\/v5\/member\/query script-path=https://gist.githubusercontent.com/Sliverkiss/9027d93ae9c027d7797f14a74e42957c/raw/qhpz.js, requires-body=true, timeout=60, tag=恰货铺子-获取账号信息, enable={QHPZ_Token_Switch}
+
+# > 恰货铺子 - 每日签到
+cron {QHPZ_Cron_Time} script-path=https://gist.githubusercontent.com/Sliverkiss/9027d93ae9c027d7797f14a74e42957c/raw/qhpz.js, timeout=120, tag=恰货铺子-每日签到, enable={QHPZ_Task_Switch}
+
+
+# >>>>>>>>>>>>>>> ✅ YX ✅ <<<<<<<<<<<<<<
+
+# > 网易严选 - 获取Cookie
+http-request ^https:\/\/act\.you\.163\.com\/act-attendance\/(?:task\/list|att\/v4\/index|att\/v3\/sign) script-path=https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/yanxuan_daily_sign.js, timeout=15, tag=网易严选-获取Cookie, enable={YX_Cookie_Switch}, img-url=https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/1f/68/01/1f6801fa-504c-fbe0-c14e-8f46b8245de2/AppIcon-1x_U007emarketing-0-8-0-85-220-0.png/100x100bb.jpg
+
+# > 网易严选 - 每日签到
+cron {YX_Cron_Time} script-path=https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/yanxuan_daily_sign.js, timeout=60, tag=网易严选每日签到, enable={YX_Task_Switch}, img-url=https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/1f/68/01/1f6801fa-504c-fbe0-c14e-8f46b8245de2/AppIcon-1x_U007emarketing-0-8-0-85-220-0.png/100x100bb.jpg
+
+
+[MITM]
+hostname = api.cloud.189.cn, *.kuwo.cn, mxsa.mxbc.net, webapi2.qmai.cn, webapi.qmai.cn, qmwebapi.qmai.cn, h5.youzan.com, app.17u.cn, cstapp.17u.cn, user-njs.yun.139.com, personal-act.wps.cn, shop-api.retail.mi.com, crm-qhpz.qhpzls.com, act.you.163.com

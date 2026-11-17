@@ -1,0 +1,48 @@
+#!name=去广告合集(配置版)
+#!desc=整合酷我音乐等App的去广告净化规则。支持在UI界面独立控制部分拦截逻辑的开关。
+#!author=可莉🅥 & 自用
+#!homepage=https://hub.kelee.one
+#!icon=https://raw.githubusercontent.com/Sliverkiss/QuantumultX/main/icon/no_ad.png
+#!category=自用模块
+#!system=iOS, iPadOS
+#!loon_version=3.2.1(733)
+#!date=2025-05-13 16:00:00
+
+#############################################
+# ⚙️ 配置区域
+#############################################
+
+[Argument]
+
+# >>>>>>>>> 中国广电 (C) <<<<<<<<<
+CBN_Ad_Switch = switch, true, tag=中国广电-去广告, desc=净化首页、导航栏及开屏广告
+
+
+
+#############################################
+# 🚫 复写区域 (Body修改/JSONJQ)
+# 注：此处规则负责精细化的Body修改，跟随插件整体启停
+#############################################
+
+[Rewrite]
+# > 中国广电 - 净化首页/导航栏
+^https?:\/\/app\.10099\.com\.cn\/contact-web\/api\/content\/qryPosterStand response-body-json-jq '.data |= map(select(.posterStandName | test("中部业务菜单|导航栏|我的-特色|个人中心|客服")))'
+^https?:\/\/app\.10099\.com\.cn\/contact-web\/api/content\/qryNavigationMenuList response-body-json-jq '.data[]?.children |= map(select(.catalogName!="视听"))'
+^https?:\/\/app\.10099\.com\.cn\/contact-web\/api\/version\/getFlashScreenPage - reject-200
+
+
+
+#############################################
+# 📜 脚本区域 (可开关的拦截)
+# 使用通用Reject脚本实现拦截，支持enable参数
+#############################################
+
+[Script]
+
+
+#############################################
+# 🕵️ MITM 区域
+#############################################
+
+[MITM]
+hostname = app.10099.com.cn
