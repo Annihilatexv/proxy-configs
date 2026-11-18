@@ -47,13 +47,28 @@ const LOON = {
   ]
 };
 
-const ICON_ROOT = "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/";
+// 图标优先沿用 Loon：GitHub Raw 源，避免 jsDelivr 分支缓存；全部核对过仓库中的实际图片。
+const QURE_ICON = "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/";
 const ICONS = {
-  "节点选择": "Proxy.png", "命悬一线": "Auto.png", "大碗": "Available_1.png",
-  "兜底后备策略": "Final.png", "OpenAI": "ChatGPT.png",
-  "YouTube": "YouTube.png", "HK": "Hong_Kong.png",
-  "TW": "Taiwan.png", "JP": "Japan.png", "KR": "Korea.png",
-  "SG": "Singapore.png", "US": "United_States.png"
+  "节点选择": QURE_ICON + "Available.png",
+  "OpenAI": QURE_ICON + "ChatGPT.png",
+  "Anthropic": "https://raw.githubusercontent.com/luestr/IconResource/main/App_icon/120px/Claude.png",
+  "Gemini": "https://raw.githubusercontent.com/fmz200/wool_scripts/main/icons/apps/Gemini_01.png",
+  "Grok": "https://raw.githubusercontent.com/luestr/IconResource/main/App_icon/120px/Grok.png",
+  "Linux.do": "https://raw.githubusercontent.com/lsimply/icons/main/png/linux.png",
+  "YouTube": QURE_ICON + "YouTube.png",
+  "Telegram": QURE_ICON + "Telegram.png",
+  "RackNerd": QURE_ICON + "Heart.png",
+  "JP": QURE_ICON + "Japan.png",
+  "US": QURE_ICON + "United_States.png",
+  "HK": QURE_ICON + "Hong_Kong.png",
+  "TW": QURE_ICON + "Taiwan.png",
+  "KR": QURE_ICON + "Korea.png",
+  "SG": QURE_ICON + "Singapore.png",
+  "大碗": QURE_ICON + "Available_1.png",
+  "命悬一线": "https://raw.githubusercontent.com/Orz-3/mini/master/Color/Cylink.png",
+  "兜底后备策略": QURE_ICON + "Available.png",
+  "ALL_Filter": QURE_ICON + "Proxy.png"
 };
 
 function distinct(values) {
@@ -82,7 +97,7 @@ function addGroup(groups, name, type, entries, options = {}, providerNames = [],
     group.lazy = true;
   }
   Object.assign(group, options || {});
-  if (ICONS[name]) group.icon = ICON_ROOT + ICONS[name];
+  if (ICONS[name]) group.icon = ICONS[name];
   // 未配置任何真实节点时避免建立空策略组；提供者组则交由内核动态注入。
   if (!group.proxies.length && !group.use) group.proxies = ["DIRECT"];
   groups.push(group);
