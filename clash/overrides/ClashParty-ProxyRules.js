@@ -29,7 +29,9 @@ const LOON = {
   localDirect: [
     "DOMAIN-SUFFIX,linuxdo.org,DIRECT",
     "DOMAIN-SUFFIX,speedtest.net,DIRECT",
-    "DOMAIN-SUFFIX,qq.com,DIRECT"
+    "DOMAIN-SUFFIX,qq.com,DIRECT",
+    "DOMAIN-SUFFIX,bing.com,DIRECT",
+    "DOMAIN-SUFFIX,bing.cn,DIRECT"
   ],
   localProxy: [
     "DOMAIN,cdn.jsdelivr.net,节点选择",
@@ -210,7 +212,11 @@ function main(config) {
   result.ipv6 = false;
   // 与 Loon 的 IPv4 优先 / SNI 嗅探相近；保留 Clash Party 原有 DNS 和 TUN 接管设置。
   if (isObject(config.dns)) result.dns = { ...config.dns, ipv6: false };
-  if (isObject(config.sniffer)) result.sniffer = { ...config.sniffer, enable: true };
+  result.sniffer = isObject(config.sniffer) ? { ...config.sniffer, enable: true } : {
+    enable: true,
+    sniff: { TLS: { ports: [443, 8443] }, HTTP: { ports: [80, 8080] } },
+    "override-destination": false
+  };
   return result;
 }
 
