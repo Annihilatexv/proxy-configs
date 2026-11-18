@@ -1,61 +1,48 @@
-# Clash Party / Mihomo：按 Loon 习惯定制的远程覆写
+# Clash Party 日常覆写（对齐 Loon）
 
-## 文件说明
+这份覆写按个人 Loon 配置重写，**只保留 Loon 已配置的策略与相应的路由方向**，不再继承原作者 `convert.js` 中的加密货币、静态资源、金融、流媒体细分等额外策略组。
 
-- ClashParty-ProxyRules.js：**当前实际使用的远程覆写**，根据个人 Loon 的策略组和分流偏好改写。
-- convert.js：原作者 powerfullz/override-rules 的可读版构建，仅作参考，**不是当前生效脚本**。
-- LICENSE.upstream：原作者 MIT 许可证，保留其许可及来源。
+## 远程 JavaScript 覆写
 
-上游参考项目：https://github.com/powerfullz/override-rules
+- GitHub Raw：https://raw.githubusercontent.com/Annihilatexv/proxy-configs/main/clash/overrides/ClashParty-ProxyRules.js
+- jsDelivr：https://cdn.jsdelivr.net/gh/Annihilatexv/proxy-configs@main/clash/overrides/ClashParty-ProxyRules.js
 
-## Clash Party 远程导入 URL
+在 Clash Party 的 JavaScript 覆写中通过 URL 导入，并在当前配置订阅中启用。修改后需要刷新**覆写文件**。
 
-GitHub Raw：
+## 策略组（与 Loon 对齐）
 
-https://raw.githubusercontent.com/Annihilatexv/proxy-configs/main/clash/overrides/ClashParty-ProxyRules.js
-
-jsDelivr：
-
-https://cdn.jsdelivr.net/gh/Annihilatexv/proxy-configs@main/clash/overrides/ClashParty-ProxyRules.js
-
-在 Clash Party 的「覆写」中新建/导入 JavaScript 远程覆写，并给当前订阅选用。GitHub 更新后还应手动刷新远程覆写文件（不只是刷新节点订阅）。
-
-## 与 Loon 对齐的分组
-
-| 组 | 规则 / 默认顺序 |
+| Loon 策略组 | Clash Party |
 | --- | --- |
-| 节点选择 | 命悬一线 → 大碗 → US/HK/TW/JP/KR/SG → ALL_Filter → DIRECT |
-| 命悬一线 | 非免费普通节点自动测速，600s |
-| 大碗 | 优先 [free] 免费节点，失效时回退命悬一线 |
-| JP/HK/TW/SG | 各地区自动测速 |
-| KR | 手动选择韩国节点 |
-| US | RackNerd 优先，其他美区节点故障转移 |
-| 兜底后备策略 | HK → TW → JP → KR → SG → US → 命悬一线 |
+| 节点选择 | 命悬一线、大碗、US、HK、TW、JP、KR、SG、ALL_Filter、DIRECT |
 | OpenAI | JP → 节点选择 → US → SG |
 | Anthropic / Gemini / Grok | US → 节点选择 → SG → JP |
 | Linux.do | 节点选择 → JP → US → SG → KR → HK → TW |
 | YouTube | 大碗 → 节点选择 |
 | Telegram | DIRECT → 大碗 → 节点选择 → US |
+| RackNerd | 自动测速，优先匹配 RackNerd 提供者/节点名 |
+| JP / HK / TW / SG | 各地区自动测速 |
+| KR | 韩国节点手动选择 |
+| US | RackNerd 优先，其余 US 节点故障转移 |
+| 大碗 | [free] 节点优先，无可用节点时后备命悬一线 |
+| 命悬一线 | ALL_Filter 的常规节点自动测速（不含 [free] / IPLC） |
+| 兜底后备策略 | HK → TW → JP → KR → SG → US → 命悬一线 |
 
-地区与免费节点从 Clash 当前订阅中识别。若使用 proxy-providers，则通过 use / filter 动态筛选。RackNerd 在 Loon 里属于订阅标签；在 Clash 节点名称中不一定存在，因此只能尽力通过节点名识别。
+**实现细节：** Loon 的 `ALL_Filter` 在「节点选择」中被直接引用，因此为 Mihomo 保留为一个可选择的辅助组；`FREE_Filter` 直接交给「大碗」筛选，不再额外显示。移除了额外的自定义 `GLOBAL` 分组。自定义组总数：**19**（18 个 Loon 策略组 + 1 个 `ALL_Filter` 适配组）。
 
-## 规则映射
+## 分流规则
 
-- Grok / xAI、OpenAI、Anthropic、Gemini 按 Loon 分成独立服务组。
-- YouTube、Telegram、Google、Twitter、PikPak 使用 Mihomo 域名 / GEOSITE 规则做相似分流。
-- Bing、linuxdo.org、qq.com、speedtest.net 等按原 Loon 的习惯直连。
-- jsDelivr、arXiv、OpenReview、Hugging Face、NeurIPS、V2EX 等按原 Loon 习惯走节点选择。
-- GeoIP/GeoSite 国内直连；其他流量最后走兜底后备策略。
-- 广告拦截采用公开的 AWAvenue Mihomo 规则集，GFW 则使用 Loyalsoldier 的公开规则集。**这两者不是 Loon 原远程规则的一对一复制。**
-- IPv6 关闭；保留 Clash Party 已有 DNS、TUN 配置；启用基础 SNI 嗅探。
+以 Loon 的实际政策为准：OpenAI、Anthropic、Gemini、Grok、YouTube、Telegram 各自分流；PikPak / Twitter 等走「节点选择」；国内流量尽量直连；其余流量走「兜底后备策略」。保留 Loon 中已使用的少量网站直连/代理例外、DNS IPv6 关闭及基础 SNI 嗅探设置。
 
-## 尚未迁移 / 注意事项
+- 广告拦截使用 Mihomo 兼容的公开规则作为 Loon 去广告远程列表的替代，不是逐条复制。
+- DNS / TUN 以 Clash Party 当前已有配置为基础，不导入 Loon 的敏感数据。
+- Loon 的 MITM、插件、重写与脚本不能直接作为 Clash JS 覆写运行。iOS 更新屏蔽、抖音特殊规则等部分远程列表尚未完整迁移。
+- 若 Clash 使用 `proxy-providers` 动态加载节点，地区及免费组依赖 provider 节点名过滤；某些地区没有节点时，不能保证与 Loon 故障转移行为完全相同，需在实际客户端验证。
+- 已通过模拟节点与 proxy-providers 测试 JavaScript 执行和策略组引用，但尚未在你的 Clash Party 客户端完成实测。
 
-1. Loon 的 Remote Proxy 订阅地址、机场节点、MITM 证书与密码、私有域名、公网服务器 IP 均未复制到公开仓库。
-2. Loon 已启用的 iOS 更新屏蔽、抖音修改 IP、插件和定时脚本尚未等效迁移；尤其 Rewrite/MITM/脚本不能直接作为 Clash JS 覆写使用。
-3. Loon 的远程 OpenAI/Claude/YouTube/Bing 等 .list 规则暂用 Mihomo 内建规则近似替代，覆盖范围可能不同。
-4. 如节点名称不包含地区标记、RackNerd 或 [free] 字样，自动分类需要进一步校准。没有某地区节点时，部分区域组可能会回退到通用节点。
-5. 已使用模拟节点测试 JavaScript 执行、策略组引用及规则顺序，但未在真实 Clash Party / Mihomo 内核中完成导入运行测试。
-6. 远程 URL 遇到 ERR_CERT_AUTHORITY_INVALID 时需要检查 HTTPS 证书链和代理网络；CDN 切换只是排查方式。
+## 公开仓库安全
 
-以后编辑 ClashParty-ProxyRules.js 即可更新自定义配置，convert.js 保持为上游参考版本。
+不包含 Loon 原始 MITM 证书和密码、个人订阅地址、服务器凭据及私人域名/IP。请把个人规则放在私有的本地覆写中，不要上传至公开仓库。
+
+## 来源
+
+最初参考 [powerfullz/override-rules](https://github.com/powerfullz/override-rules) 的 MIT 开源项目，许可证保留为 `LICENSE.upstream`；当前使用的是独立整理的 Loon 风格覆写脚本，不再同时保留原 `convert.js` 构建文件。
