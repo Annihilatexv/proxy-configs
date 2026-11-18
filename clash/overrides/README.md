@@ -23,11 +23,21 @@
 | JP / HK / TW / SG | 各地区自动测速 |
 | KR | 韩国节点手动选择 |
 | US | RackNerd 优先，其余 US 节点故障转移 |
-| 大碗 | [free] 节点优先，无可用节点时后备命悬一线 |
-| 命悬一线 | ALL_Filter 的常规节点自动测速（不含 [free] / IPLC） |
+| 大碗 | 隐藏 FREE_Filter 动态加载 [free] 节点，失效时回退命悬一线 |
+| 命悬一线 | 全部合格节点的动态自动测速（不含 [free] / IPLC） |
 | 兜底后备策略 | HK → TW → JP → KR → SG → US → 命悬一线 |
 
-**实现细节：** Loon 的 `ALL_Filter` 在「节点选择」中被直接引用，因此为 Mihomo 保留为一个可选择的辅助组；`FREE_Filter` 直接交给「大碗」筛选，不再额外显示。移除了额外的自定义 `GLOBAL` 分组。自定义组总数：**19**（18 个 Loon 策略组 + 1 个 `ALL_Filter` 适配组）。
+**实现细节：** Loon 的 `ALL_Filter` 在「节点选择」中被直接引用，所以保留为可选择的辅助组。为保证免费节点优先，额外保留一个 `hidden: true` 的 `FREE_Filter` 动态测速辅助组（不属于普通可见服务分类），「大碗」先尝试它，再回退「命悬一线」。不新增 `GLOBAL` 等原作者分组。当前生成 **20** 个自定义组（18 个 Loon 策略组 + `ALL_Filter` + 隐藏 `FREE_Filter`）。
+
+## 2026-11-19 节点加载故障修复
+
+**故障现象：** 旧版 JS 在脚本执行阶段枚举顶层 `proxies`，没筛出地区节点时就放入「命悬一线」。如果 Clash Party 订阅节点是 `proxy-providers` 或稍后才由内核加载，地区组就只剩「命悬一线」。
+
+**现已修正：** JP/HK/TW/KR/SG/US、ALL_Filter、命悬一线、FREE_Filter 使用 Mihomo 原生 `include-all: true` 配合 `filter` / `exclude-filter`，加载阶段自动从内联节点和 proxy-providers 中筛选。US 组保留 RackNerd 优先，RackNerd 支持识别订阅提供者名。
+
+**示例检查：** 测试过内联节点、只有 provider 的配置、RackNerd provider、空订阅的 JavaScript 生成逻辑及地区正则；没有真实机场凭据，所以尚未在你的 Clash Party / Mihomo 内核中验证最终列表。
+
+**重要：** 在客户端不仅要刷新节点订阅，也要刷新远程 JavaScript 覆写，并重新应用配置。若订阅本身没有某地区节点，对应组仍可能没有任何地区节点；不会再把它伪装成「命悬一线」。
 
 ## 分流规则
 
