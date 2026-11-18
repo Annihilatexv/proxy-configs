@@ -119,7 +119,7 @@ function makeGroups(source) {
   addGroup(groups, "Telegram", "select", ["DIRECT", "大碗", "节点选择", "US"]);
   // ALL_Filter 是 Loon 的筛选器，但「节点选择」直接引用它，所以保留为最小适配组。
   // FREE_Filter 不需要额外策略组：其节点由「大碗」直接进行故障转移。
-  addGroup(groups, "ALL_Filter", "select", normalNodes.length ? normalNodes : ["DIRECT"],
+  addGroup(groups, "ALL_Filter", "select", normalNodes.length ? normalNodes : (providerNames.length ? [] : ["DIRECT"]),
     {}, providerNames, ".*", LOON.excludePattern);
   addGroup(groups, "命悬一线", "url-test", normalNodes.length ? normalNodes : (providerNames.length ? [] : ["DIRECT"]),
     { interval: 600, tolerance: 50 }, providerNames, ".*", LOON.excludePattern);
