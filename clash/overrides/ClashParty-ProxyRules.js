@@ -66,7 +66,7 @@ function matches(name, pattern) {
   return new RegExp(pattern, "i").test(name);
 }
 
-function addGroup(groups, name, type, entries, options, providerNames, providerFilter, providerExclude) {
+function addGroup(groups, name, type, entries, options = {}, providerNames = [], providerFilter = null, providerExclude = null) {
   const directEntries = distinct(entries);
   const group = { name, type, proxies: directEntries };
   if (providerNames.length > 0 && providerFilter) {
