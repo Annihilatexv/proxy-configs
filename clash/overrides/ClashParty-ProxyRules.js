@@ -16,12 +16,12 @@
 const LOON = {
   testUrl: "https://cp.cloudflare.com/generate_204",
   regionPattern: {
-    JP: "日本|川日|东京|大阪|泉日|埼玉|沪日|深日|Japan|\\bJP\\b|🇯🇵",
-    US: "美国|波特兰|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|圣何塞|圣克拉拉|西雅图|芝加哥|United States|America|\\bUS\\b|\\bUSA\\b|🇺🇸",
-    HK: "香港|港|Hong|\\bHK\\b|🇭🇰",
-    TW: "台湾|台|Taiwan|\\bTW\\b|🇹🇼",
-    KR: "韩国|首尔|韩|韓|Korea|\\bKR\\b|\\bKOR\\b|🇰🇷",
-    SG: "新加坡|坡|狮城|Singapore|\\bSG\\b|🇸🇬"
+    JP: "日本|川日|东京|大阪|泉日|埼玉|沪日|深日|JP|Japan|🇯🇵",
+    US: "美国|美|波特兰|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|圣何塞|圣克拉拉|西雅图|芝加哥|US|USA|United States|America|🇺🇸",
+    HK: "香港|港|Hong|HK|🇭🇰",
+    TW: "台湾|台|Taiwan|TW|🇹🇼",
+    KR: "韩国|首尔|韩|韓|Korea|KR|KOR|🇰🇷",
+    SG: "新加坡|坡|狮城|Singapore|SG|🇸🇬"
   },
   // 与 Loon 中的免费/IPLC/订阅信息过滤方式相近；不使用 Go RE2 不支持的环视语法。
   freePattern: "\\[free\\]",
@@ -98,8 +98,8 @@ function addGroup(groups, name, type, entries, options = {}, providerNames = [],
   }
   Object.assign(group, options || {});
   if (ICONS[name]) group.icon = ICONS[name];
-  // 未配置任何真实节点时避免建立空策略组；提供者组则交由内核动态注入。
-  if (!group.proxies.length && !group.use) group.proxies = ["DIRECT"];
+  // include-all 由 Mihomo 在运行时注入节点，不能提前用 DIRECT 占位。
+  if (!group.proxies.length && !group.use && !group["include-all"]) group.proxies = ["DIRECT"];
   groups.push(group);
 }
 
@@ -160,6 +160,77 @@ function makeGroups(source) {
   addGroup(groups, "兜底后备策略", "fallback",
     ["HK", "TW", "JP", "KR", "SG", "US", "命悬一线"],
     { interval: 60 });
+
+  // 关键修复：不要在 JS 执行时枚举节点并决定地区组是否为空。
+  // Clash Party 可把节点声明在顶层 proxies、proxy-providers，或者在覆写后注入；
+  // 使用 Mihomo include-all，待内核加载节点后再筛选。filter 仅影响自动纳入的节点，
+  // 而不是 proxies 中显式指定的其他策略组。
+  const byName = Object.fromEntries(groups.map(group => [group.name, group]));
+  function dynamicGroup(name, pattern, exclude = LOON.excludePattern) {
+    const group = byName[name];
+    group.proxies = [];
+    delete group.use;
+    group["include-all"] = true;
+    group.filter = "(?i)" + pattern;
+    group["exclude-type"] = "direct";
+    if (exclude) group["exclude-filter"] = "(?i)" + exclude;
+    else delete group["exclude-filter"];
+    // 空地区不会错误地显示成只有「命悬一线」。
+    group["empty-fallback"] = "COMPATIBLE";
+  }
+  dynamicGroup("ALL_Filter", ".*");
+  dynamicGroup("命悬一线", ".*");
+  for (const name of ["JP", "HK", "TW", "KR", "SG"]) {
+    dynamicGroup(name, LOON.regionPattern[name]);
+  }
+  // RackNerd 可能是 Loon 的订阅名，并不包含在节点名里。
+  const rackGroup = byName.RackNerd;
+  rackGroup.proxies = [];
+  delete rackGroup.use;
+  delete rackGroup.filter;
+  delete rackGroup["exclude-filter"];
+  if (rackProviders.length) {
+    rackGroup.use = rackProviders.slice();
+    rackGroup.proxies = rackNerd.slice();
+  } else {
+    rackGroup["include-all"] = true;
+    rackGroup.filter = "(?i)Rack[ _-]?Nerd";
+    rackGroup["exclude-filter"] = "(?i)" + LOON.excludePattern;
+    rackGroup["exclude-type"] = "direct";
+  }
+  rackGroup["empty-fallback"] = "COMPATIBLE";
+
+  // US = 优先 RackNerd，之后再使用动态筛选出来的 US 节点。
+  const usGroup = byName.US;
+  usGroup.proxies = ["RackNerd"];
+  delete usGroup.use;
+  usGroup["include-all"] = true;
+  usGroup.filter = "(?i)" + LOON.regionPattern.US;
+  usGroup["exclude-filter"] = "(?i)" + LOON.excludePattern;
+  usGroup["exclude-type"] = "direct";
+
+  // Loon FREE_Filter 是节点过滤器，不是普通选择组：用隐藏的健康检查组等效模拟。
+  // 「大碗」先尝试此组，无可用免费节点时再故障转移到「命悬一线」。
+  const freeGroup = {
+    name: "FREE_Filter",
+    type: "url-test",
+    proxies: [],
+    "include-all": true,
+    filter: "(?i)\\[free\\]",
+    "exclude-type": "direct",
+    "empty-fallback": "REJECT",
+    url: LOON.testUrl,
+    interval: 300,
+    tolerance: 50,
+    hidden: true,
+    icon: ICONS["大碗"]
+  };
+  groups.push(freeGroup);
+  const bowl = byName["大碗"];
+  bowl.proxies = ["FREE_Filter", "命悬一线"];
+  delete bowl.use;
+  delete bowl.filter;
+  delete bowl["exclude-filter"];
   return groups;
 }
 
