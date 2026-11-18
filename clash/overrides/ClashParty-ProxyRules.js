@@ -97,12 +97,14 @@ function makeGroups(source) {
     : [];
   const allValid = distinct(all).filter(n => !matches(n, LOON.excludePattern));
   const freeNodes = distinct(all).filter(n => matches(n, LOON.freePattern));
-  const normalNodes = allValid.length ? allValid : distinct(all);
+  const normalNodes = allValid; // 与 Loon ALL_Filter 一致：无合格节点时不把 free/IPLC 混入
   const regions = {};
   for (const key of Object.keys(LOON.regionPattern)) {
     regions[key] = normalNodes.filter(n => matches(n, LOON.regionPattern[key]));
   }
   const rackNerd = normalNodes.filter(n => /rack[\s_-]?nerd/i.test(n));
+  // 优先识别 Loon 原有的 RackNerd 订阅提供者，而非依赖单个节点名称。
+  const rackProviders = providerNames.filter(n => /rack[\s_-]?nerd/i.test(n));
   const groups = [];
   // 顶层选项顺序沿用 Loon（具体节点名单来自当前 Clash 订阅，不导入 Loon 的凭据）。
   addGroup(groups, "节点选择", "select",
@@ -115,17 +117,18 @@ function makeGroups(source) {
   addGroup(groups, "Linux.do", "select", ["节点选择", "JP", "US", "SG", "KR", "HK", "TW"]);
   addGroup(groups, "YouTube", "select", ["大碗", "节点选择"]);
   addGroup(groups, "Telegram", "select", ["DIRECT", "大碗", "节点选择", "US"]);
-  // 所有/免费节点合集用显式节点名；如果订阅采用 proxy-providers，则使用 Mihomo 原生 use + filter。
+  // ALL_Filter 是 Loon 的筛选器，但「节点选择」直接引用它，所以保留为最小适配组。
+  // FREE_Filter 不需要额外策略组：其节点由「大碗」直接进行故障转移。
   addGroup(groups, "ALL_Filter", "select", normalNodes.length ? normalNodes : ["DIRECT"],
     {}, providerNames, ".*", LOON.excludePattern);
-  addGroup(groups, "FREE_Filter", "select", freeNodes.length ? freeNodes : ["命悬一线"],
-    {}, providerNames, LOON.freePattern);
   addGroup(groups, "命悬一线", "url-test", normalNodes.length ? normalNodes : (providerNames.length ? [] : ["DIRECT"]),
     { interval: 600, tolerance: 50 }, providerNames, ".*", LOON.excludePattern);
   addGroup(groups, "大碗", "fallback", [...freeNodes, "命悬一线"],
     { interval: 300 }, providerNames, LOON.freePattern);
-  addGroup(groups, "RackNerd", "url-test", rackNerd.length ? rackNerd : ["命悬一线"],
-    { interval: 300, tolerance: 50 }, providerNames, "Rack[Nn]erd");
+  addGroup(groups, "RackNerd", "url-test", rackNerd.length ? rackNerd : (rackProviders.length ? [] : ["命悬一线"]),
+    { interval: 300, tolerance: 50 },
+    rackProviders.length ? rackProviders : providerNames,
+    rackProviders.length ? ".*" : "Rack[Nn]erd");
   for (const key of ["JP", "HK", "TW", "KR", "SG"]) {
     const type = key === "KR" ? "select" : "url-test";
     const fallback = providerNames.length ? [] : ["命悬一线"];
@@ -135,17 +138,13 @@ function makeGroups(source) {
       providerNames, LOON.regionPattern[key], LOON.excludePattern);
   }
   // Loon US = fallback(RackNerd, US_Filter)。
-  const hasRack = rackNerd.length > 0 || providerNames.length > 0;
+  const hasRack = rackNerd.length > 0 || rackProviders.length > 0;
   addGroup(groups, "US", "fallback",
     distinct([...(hasRack ? ["RackNerd"] : []), ...regions.US, ...(regions.US.length ? [] : ["命悬一线"])]),
     { interval: 600 }, providerNames, LOON.regionPattern.US, LOON.excludePattern);
   addGroup(groups, "兜底后备策略", "fallback",
     ["HK", "TW", "JP", "KR", "SG", "US", "命悬一线"],
     { interval: 60 });
-  // GLOBAL 在全局模式下也能直接选择这些服务组。
-  addGroup(groups, "GLOBAL", "select",
-    ["节点选择", "兜底后备策略", "OpenAI", "YouTube", ...normalNodes, "DIRECT"],
-    {}, providerNames, ".*", LOON.excludePattern);
   return groups;
 }
 
