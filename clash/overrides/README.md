@@ -39,6 +39,20 @@
 
 **重要：** 在客户端不仅要刷新节点订阅，也要刷新远程 JavaScript 覆写，并重新应用配置。若订阅本身没有某地区节点，对应组仍可能没有任何地区节点；不会再把它伪装成「命悬一线」。
 
+## 2026-11-19 地区节点漏匹配修复
+
+**根因：** 上一版不正确地把 ALL_Filter 的宽泛排除词（例如“订阅”“流量”“套餐”“联系”等）用于所有地区组。Loon 原本的 JP/HK/TW/KR/SG/US 地区筛选器只排除 `IPLC` 和 `[free]`，因此上一版会丢失大量名称中包含这些词的地区节点。
+
+**修复：**
+- JP/HK/TW/KR/SG/US 全部采用 `include-all: true` 动态加载节点，`exclude-filter: "(?i)IPLC|\\[free\\]"`。
+- 地区表达式保留 Loon 原关键词，并补充国旗及部分常见机场/地区代码（HKG、TPE、NRT、LAX、SIN 等）。
+- `ALL_Filter` 和 `命悬一线` 仍然沿用更严格的非节点信息过滤；二者与地区组不再共用 `exclude-filter`。
+- 对 US 策略，仅在当前配置中能识别 RackNerd 提供者或内联节点时优先引用 RackNerd，避免无节点的 RackNerd 抢占优先顺序。
+
+**回归测试：** `node clash/overrides/tests/region-matching.test.cjs`。覆盖普通节点、仅 providers、混合订阅及空订阅，并核对典型命名、免费/IPLC 排除、组引用和图标。合成数据测试不等于实际 Clash Party 内核的最终节点验证。
+
+**检查方式：** 刷新 JavaScript 覆写、刷新订阅、重新应用。若某些节点仍缺失，请仅提供节点名称（可隐藏 IP、服务器地址、订阅 URL、Token），我们可据此针对具体命名完善地区表达式。
+
 ## 分流规则
 
 以 Loon 的实际政策为准：OpenAI、Anthropic、Gemini、Grok、YouTube、Telegram 各自分流；PikPak / Twitter 等走「节点选择」；国内流量尽量直连；其余流量走「兜底后备策略」。保留 Loon 中已使用的少量网站直连/代理例外、DNS IPv6 关闭及基础 SNI 嗅探设置。
