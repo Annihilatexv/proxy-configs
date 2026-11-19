@@ -16,7 +16,7 @@ const nodes = [
   "🇺🇸 美国 LA 02","RackNerd US","[free] HK","IPLC JP"
 ];
 const expectedRegion = {
-  JP:["JP 东京 Premium","日本-03"],
+  JP:["JP 东京 Premium","日本-03","IPLC JP"],
   HK:["🇭🇰 [直连-香港2] ✨ 1x"],
   TW:["🇹🇼 TW 台北01","TPE-02"],
   KR:["KR 首尔 Premium"],
@@ -90,7 +90,7 @@ const chineseCases=[
 const negativeCases=[
   ["TW","Thailand-01"],["US","AUS01"],["JP","JJPPremium01"],
   ["SG","Single-01"],["HK","THK01"],
-  ["TW","VLESS-IPLC-台湾家宽"],["TW","VLESS-[free]-台湾家宽"]
+  ["TW","VLESS-[free]-台湾家宽"]
 ];
 const providerSample=context.main({
   "proxy-providers": { Airport: { type:"http",url:"https://example.invalid/a.yaml" } }
@@ -133,13 +133,13 @@ const autoGroups = Object.fromEntries(autoCfg["proxy-groups"].map(g=>[g.name,g])
 const auto = autoGroups["命悬一线"];
 const strict = autoGroups.ALL_Filter;
 assert.ok(auto["include-all-proxies"] === true, "auto should include loaded outbound proxies");
-assert.equal(auto["exclude-filter"], "(?i)\\[free\\]|IPLC");
+assert.equal(auto["exclude-filter"], "(?i)\\[free\\]");
 assert.equal(auto.filter, "(?i).*");
-assert.equal(auto.proxies.length,autoCandidates.length - 2);
-assert.ok(!auto.proxies.includes("IPLC-日本01"));
+assert.equal(auto.proxies.length,autoCandidates.length - 1);
+assert.ok(auto.proxies.includes("IPLC-日本01"));
 assert.ok(!auto.proxies.includes("[free] 香港"));
 assert.ok(strict.proxies.length < auto.proxies.length);
-for (const name of autoCandidates.slice(0,9)) {
+for (const name of autoCandidates.slice(0,10)) {
   assert.ok(auto.proxies.includes(name), "auto missing normal node " + name);
 }
 const autoProviderCfg=context.main({
@@ -148,6 +148,37 @@ const autoProviderCfg=context.main({
 const autoProvider=autoProviderCfg["proxy-groups"].find(g=>g.name==="命悬一线");
 assert.ok(autoProvider["include-all-proxies"]);
 assert.equal(autoProvider.use.join(","),"Airport");
-console.log("PASS: auto group keeps 9 normal nodes despite plan/traffic labels; excludes only [free]/IPLC");
+console.log("PASS: auto group keeps normal nodes including IPLC; excludes only [free]");
+
+
+// IPLC is now allowed in every normal region and in both auto/ALL_Filter.
+// Only [free] remains an explicit exclusion for regular groups.
+const ipCases=[
+  ["JP","IPLC-日本 Tokyo 01"],["TW","VLESS-IPLC-台湾家宽"],
+  ["HK","HK IPLC 03"],["KR","IPLC 韩国-01"],
+  ["SG","IPLC-Singapore 02"],["US","IPLC US-04"]
+];
+const ipProviders=context.main({"proxy-providers":{
+  Airport:{type:"http",url:"https://example.invalid/a.yaml"}
+}});
+const ipProviderMap=Object.fromEntries(ipProviders["proxy-groups"].map(g=>[g.name,g]));
+for(const [country,name] of ipCases){
+  const result=context.main({proxies:[{name,type:"ss"}]});
+  const byName=Object.fromEntries(result["proxy-groups"].map(g=>[g.name,g]));
+  assert.ok(byName[country].proxies.includes(name),country+" missing IPLC "+name);
+  assert.ok(byName["命悬一线"].proxies.includes(name),"auto missing IPLC "+name);
+  assert.ok(byName.ALL_Filter.proxies.includes(name),"ALL_Filter missing IPLC "+name);
+  for(const key of [country,"命悬一线","ALL_Filter"]){
+    const p=ipProviderMap[key];
+    assert.ok(p.use.length>0,key+" missing provider reference");
+    assert.ok(!(p["exclude-filter"]||"").includes("IPLC"),key+" provider excludes IPLC");
+  }
+}
+const freeCheck=context.main({proxies:[{name:"[free] IPLC 香港",type:"ss"}]});
+const byFree=Object.fromEntries(freeCheck["proxy-groups"].map(g=>[g.name,g]));
+assert.ok(!byFree.HK.proxies.includes("[free] IPLC 香港"));
+assert.ok(!byFree["命悬一线"].proxies.includes("[free] IPLC 香港"));
+assert.ok(byFree.FREE_Filter.proxies.includes("[free] IPLC 香港"));
+console.log("PASS: IPLC included in JP/HK/TW/KR/SG/US, ALL_Filter and auto, [free] remains separate");
 
 console.log("PASS: 6 inputs; regions, providers, optional FREE_Filter, and every group has proxies/use");
