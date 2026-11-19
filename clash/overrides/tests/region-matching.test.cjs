@@ -1,67 +1,74 @@
-// Regression test: run with `node clash/overrides/tests/region-matching.test.cjs`
-// Synthetic node names only. No personal subscription data or network access.
+// Run: node clash/overrides/tests/region-matching.test.cjs
+// Contains only synthetic node names and placeholder URLs, no subscriptions or credentials.
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
 
-const script = fs.readFileSync(path.join(__dirname, "../ClashParty-ProxyRules.js"), "utf8");
-const sandbox = {};
-vm.runInNewContext(script, sandbox, { filename: "ClashParty-ProxyRules.js" });
-assert.equal(typeof sandbox.main, "function");
-const main = sandbox.main;
+const source = fs.readFileSync(path.join(__dirname, "../ClashParty-ProxyRules.js"), "utf8");
+const context = { console: { log: () => {} } };
+vm.runInNewContext(source, context, { filename: "ClashParty-ProxyRules.js" });
+assert.equal(typeof context.main, "function");
 
-function accepts(group, name) {
-  const compile = (pattern) => new RegExp(pattern.replace(/^\(\?i\)/, ""), "i");
-  return compile(group.filter).test(name) && !compile(group["exclude-filter"] || "(?!)").test(name);
-}
-
-const samples = [
-  ["🇭🇰 HKG-01 官网订阅", "HK"],
-  ["JP 东京 Premium 02", "JP"],
-  ["🇯🇵 Tokyo-NRT 03", "JP"],
-  ["🇺🇸 US-USA 网站 04", "US"],
-  ["SG-SIN 流量 05", "SG"],
-  ["🇹🇼 TPE08 套餐", "TW"],
-  ["KR 首尔 06", "KR"],
-  ["[free] HK 07", null],
-  ["IPLC 日本 08", null],
+const nodes = [
+  "🇭🇰 [直连-香港2] ✨ 1x",
+  "JP 东京 Premium",
+  "日本-03",
+  "🇹🇼 TW 台北01",
+  "TPE-02",
+  "KR 首尔 Premium",
+  "🇸🇬 SG 1x",
+  "SIN 新加坡 02",
+  "US-NYC-01",
+  "🇺🇸 美国 LA 02",
+  "RackNerd US",
+  "[free] HK",
+  "IPLC JP"
 ];
-const cases = [
-  { proxies: samples.map(([name]) => ({ name, type: "ss" })) },
-  { "proxy-providers": { Airport: { type: "http", url: "https://example.invalid/a.yaml", path: "./a.yaml" } } },
-  { "proxy-providers": {
-      RackNerd: { type: "http", url: "https://example.invalid/r.yaml", path: "./r.yaml" },
-      Airport: { type: "http", url: "https://example.invalid/a.yaml", path: "./a.yaml" }
-    } },
-  { proxies: [] },
+const geo = {
+  JP: ["JP 东京 Premium","日本-03"],
+  HK: ["🇭🇰 [直连-香港2] ✨ 1x"],
+  TW: ["🇹🇼 TW 台北01","TPE-02"],
+  KR: ["KR 首尔 Premium"],
+  SG: ["🇸🇬 SG 1x","SIN 新加坡 02"],
+  US: ["US-NYC-01","🇺🇸 美国 LA 02","RackNerd US"]
+};
+const configs = [
+  { name: "inline", proxies: nodes.map(name => ({name, type:"ss"})) },
+  { name: "provider", "proxy-providers": { Airport: {type:"http",url:"https://example.invalid/a.yaml"},RackNerd:{type:"http",url:"https://example.invalid/r.yaml"} } },
+  { name: "mixed", proxies: [{name:"JP 东京 Premium",type:"ss"}], "proxy-providers": {Airport:{type:"http",url:"https://example.invalid/a.yaml"}}},
+  { name: "empty", proxies: [], "proxy-groups": [{name:"original",type:"select",proxies:["DIRECT"]}] }
 ];
-for (const [index, config] of cases.entries()) {
-  const result = main(config);
+for (const config of configs) {
+  const result = context.main(config);
+  if (config.name === "empty") {
+    assert.equal(result, config, "no-source config must be preserved");
+    continue;
+  }
   const groups = result["proxy-groups"];
-  const map = Object.fromEntries(groups.map(group => [group.name, group]));
-  assert.equal(groups.length, 20, "unexpected group count");
-  assert.equal(groups.filter(g => !g.icon).length, 0, "missing icon");
-  const inlineNames = new Set((config.proxies || []).map(proxy => proxy.name));
+  const groupMap = Object.fromEntries(groups.map(g => [g.name,g]));
+  assert.equal(groups.length, 20);
+  assert.equal(groups.filter(g => !g.icon).length,0);
+  const valid = new Set(["DIRECT","REJECT",...groups.map(g => g.name),...(config.proxies||[]).map(p => p.name)]);
   for (const group of groups) {
-    for (const item of group.proxies || [])
-      assert.ok(item === "DIRECT" || item === "REJECT" || map[item] || inlineNames.has(item), item + " missing");
-  }
-  for (const region of ["JP", "HK", "TW", "KR", "SG", "US"]) {
-    const group = map[region];
-    assert.equal(group["include-all"], true);
-    assert.equal(group["exclude-filter"], "(?i)IPLC|\\[free\\]");
-    assert.ok(!(group.proxies || []).includes("命悬一线"));
-  }
-  assert.ok(!map["加密货币"] && !map["静态资源"]);
-  assert.equal(map["大碗"].proxies.join(","), "FREE_Filter,命悬一线");
-  if (index === 0) {
-    for (const [name, intendedRegion] of samples) {
-      const hits = ["JP", "HK", "TW", "KR", "SG", "US"].filter(region => accepts(map[region], name));
-      assert.deepEqual(hits, intendedRegion ? [intendedRegion] : [], name);
+    for (const candidate of group.proxies || []) {
+      assert.ok(valid.has(candidate), group.name + " refers to missing " + candidate);
     }
   }
-  if (index === 1) assert.deepEqual(Array.from(map.US.proxies), []);
-  if (index === 2) assert.equal(map.RackNerd.use.join(","), "RackNerd");
+  for (const [region,expected] of Object.entries(geo)) {
+    const g = groupMap[region];
+    if (config.name === "inline") {
+      const actuallyListed = g.proxies.filter(p => nodes.includes(p));
+      assert.deepEqual(actuallyListed, expected, region);
+      assert.ok(!g.use);
+    } else if (config.name === "provider") {
+      assert.equal(g.use.length,2,region+" should reference both providers");
+      assert.ok(g.filter,region+" must filter provider nodes");
+    } else if (config.name === "mixed") {
+      assert.equal(g.use.length,1,region+" should also reference provider");
+    }
+  }
+  assert.equal(groupMap["大碗"].proxies.join(","),"FREE_Filter,命悬一线");
+  assert.ok(!groupMap["加密货币"] && !groupMap["静态资源"]);
 }
-console.log("PASS: 4 source shapes, 9 node-name samples, valid groups/icons and Loon region exclusions");
+console.log("PASS: explicit Loon region matching, provider-based filters, mixed sources, empty input fallback, icons and references");
