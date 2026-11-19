@@ -18,7 +18,7 @@ https://raw.githubusercontent.com/Annihilatexv/proxy-configs/main/clash/override
 
 1. **顶层 proxies 中的真实节点**：JavaScript 用各地区正则直接筛选，明确写进地区组的 proxies 列表。这是最容易确定和检查的方式；不依赖内核后续二次自动填充。
 2. **proxy-providers 中的动态节点**：策略组显式设置 use（引用当前配置中存在的 provider 名称），再设置 filter、exclude-filter；这属于 Mihomo 正式支持的配置格式。
-3. 对 JP/HK/TW/KR/SG/US，仅排除 IPLC 或 [free]。ALL_Filter 保留 Loon 原先的严格过滤；命悬一线为避免漏掉正常节点，现只排除 IPLC 和 [free]。
+3. 对 JP/HK/TW/KR/SG/US，只排除 [free]，不再排除 IPLC。ALL_Filter 保留其他原有严格筛选词，但取消 IPLC 排除；命悬一线只排除 [free]。
 4. 对于在 JS 阶段看不到任何 proxies 且没有 proxy-providers 的配置，**保留原始配置**，避免强行生成空代理组。
 5. 使用现有 Clash 订阅的节点和 Provider，不导入原始 Loon 机场 URL 或密钥。
 
@@ -38,7 +38,7 @@ https://raw.githubusercontent.com/Annihilatexv/proxy-configs/main/clash/override
 | KR | 地区节点手动选择 |
 | US | 有 RackNerd 来源时优先 RackNerd，其后为 US 地区节点 |
 | RackNerd | 若提供者名或节点名可识别，则使用该来源 |
-| 命悬一线 | 合格普通节点自动测速（不含 [free] 和 IPLC） |
+| 命悬一线 | 包括 IPLC 的常规节点自动测速，仅排除 [free] |
 | 大碗 | 免费节点组失败后转用命悬一线 |
 | 兜底后备策略 | HK、TW、JP、KR、SG、US、命悬一线 |
 
@@ -64,7 +64,7 @@ https://raw.githubusercontent.com/Annihilatexv/proxy-configs/main/clash/override
 
 同时保留 Loon 的基本中文词，补充首尔/首爾、东京/東京、台北/臺北、九龍/九龙、舊金山/旧金山等地区别名，以及常用英文城市、机场代码、国旗。
 
-英文地区和机场缩写设置非字母边界，减少 `SIN` 误命中 `Single`、`US` 误命中 `AUS`。地区组与命悬一线现在只排除 `IPLC` 和 `[free]`；ALL_Filter 仍采用更严格的 Loon 通用过滤。
+英文地区和机场缩写设置非字母边界，减少 `SIN` 误命中 `Single`、`US` 误命中 `AUS`。地区组和命悬一线现在仅排除 `[free]`，**不排除 `IPLC`**；ALL_Filter 保留其他严格过滤词，但也不排除 IPLC。
 
 回归测试增加中文简繁体、协议前缀、Provider 正则和误判测试，均以合成名称运行，不涉及私人机场数据。
 
@@ -76,12 +76,20 @@ Mihomo 内置 `GLOBAL` 默认列出全部代理节点和策略组，不受本覆
 
 **现在明确分离两种用途：**
 
-- `命悬一线`：全部普通节点的自动测速池（仅排除 `IPLC` 与 `[free]`）；显式节点直接写入 `proxies`，现有 Provider 使用 `use`，并加上 `include-all-proxies: true` 保证内核中存在的顶层代理也参与候选。因为有意排除两类特殊节点，它仍不会与 `GLOBAL` 的项目数完全相同。
+- `命悬一线`：包含 IPLC 在内的自动测速池（仅排除 `[free]`）；显式节点直接写入 `proxies`，现有 Provider 使用 `use`，并加上 `include-all-proxies: true` 补充内核中已有的顶层代理。它仍不一定与 `GLOBAL` 项目数一致，因为 GLOBAL 还包含策略组等项目。
 - `ALL_Filter`：保留原 Loon 的严格过滤偏好，不与自动测速池强制同步；若用户需要完整原始节点列表，应看内置 `GLOBAL`。
 
-回归测试添加带“套餐”“流量”“官网”“客服”等文本的模拟真实节点，确保它们进入 `命悬一线`；只有 `IPLC` 与 `[free]` 继续被排除。更新日志仍只记节点数量，不收集节点名称与订阅信息。
+回归测试添加带“套餐”“流量”“官网”“客服”等文本的模拟真实节点，以及包含 `IPLC` 的各地区节点，确保它们进入对应策略；仅 `[free]` 留给免费节点策略。更新日志仍只记节点数量，不收集节点名称与订阅信息。
 
 这部分通过 JavaScript 模拟配置测试，真实 Mihomo 内核和 Clash Party 客户端的最终候选列表仍需以用户重新应用后的实际情况为准。
+
+## 2026-11-19：取消 IPLC 排除
+
+按最新要求，IPLC 应视为正常代理节点，不应因为名称中出现 `IPLC` 而被过滤。现已移除 `命悬一线`、`ALL_Filter`、JP/HK/TW/KR/SG/US 以及 RackNerd 的全部 `IPLC` 排除条件。
+
+`[free]` 的处理维持不变：由 `FREE_Filter` / `大碗` 优先使用，不混入常规地区策略。
+
+自动化测试增加包含 `IPLC` 的中英文地区节点与 Provider 过滤断言，确认 IPLC 会被纳入、`[free]` 仍按原逻辑排除。本测试不代替客户端实际加载后的验收。
 
 ## 安全诊断日志（仅计数）
 
