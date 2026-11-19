@@ -99,8 +99,18 @@ function addGroup(groups, name, type, entries, options = {}, providerNames = [],
   }
   Object.assign(group, options || {});
   if (ICONS[name]) group.icon = ICONS[name];
-  // include-all 由 Mihomo 在运行时注入节点，不能提前用 DIRECT 占位。
-  if (!group.proxies.length && !group.use && !group["include-all"] && !group["include-all-proxies"] && !group["include-all-providers"] && !group["empty-fallback"]) group.proxies = ["DIRECT"];
+  // Mihomo requires at least one concrete proxies or use entry.
+  // empty-fallback only controls an already-valid group's runtime behavior;
+  // it does NOT make an empty group valid during config parsing.
+  if (!group.proxies.length && !(Array.isArray(group.use) && group.use.length)) {
+    group.proxies = ["ALL_Filter", "命悬一线"].includes(group.name)
+      ? ["DIRECT"]
+      : ["命悬一线"];
+    if (typeof console !== "undefined" && console.log) {
+      console.log("[Loon-override] no matching source for " + group.name
+        + "; set safe group fallback");
+    }
+  }
   groups.push(group);
 }
 
@@ -173,11 +183,20 @@ function makeGroups(source) {
     ...(rackSelected ? ["RackNerd"] : []), ...usNodes
   ]), { "empty-fallback": "COMPATIBLE", interval: 600, ...usOptions });
 
-  addFiltered("FREE_Filter", "url-test", "\\[free\\]", "", {
-    "empty-fallback": "REJECT", interval: 300, tolerance: 50,
-    hidden: true, icon: ICONS["大碗"]
-  });
-  add("大碗", "fallback", ["FREE_Filter", "命悬一线"], { interval: 300 });
+  // Do not generate an empty FREE_Filter group: Mihomo rejects a group
+  // without proxies/use even when empty-fallback has been provided.
+  // When a provider exists, its [free] nodes are filtered at runtime.
+  const freeEntries = pick("\\[free\\]");
+  const hasFreeSource = freeEntries.length > 0 || providerNames.length > 0;
+  if (hasFreeSource) {
+    addFiltered("FREE_Filter", "url-test", "\\[free\\]", "", {
+      "empty-fallback": "REJECT", interval: 300, tolerance: 50,
+      hidden: true, icon: ICONS["大碗"]
+    });
+  }
+  add("大碗", "fallback", hasFreeSource
+    ? ["FREE_Filter", "命悬一线"]
+    : ["命悬一线"], { interval: 300 });
   add("兜底后备策略", "fallback",
     ["HK","TW","JP","KR","SG","US","命悬一线"], { interval: 60 });
   return groups;
