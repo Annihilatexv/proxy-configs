@@ -100,84 +100,86 @@ function addGroup(groups, name, type, entries, options = {}, providerNames = [],
   Object.assign(group, options || {});
   if (ICONS[name]) group.icon = ICONS[name];
   // include-all 由 Mihomo 在运行时注入节点，不能提前用 DIRECT 占位。
-  if (!group.proxies.length && !group.use && !group["include-all"]) group.proxies = ["DIRECT"];
+  if (!group.proxies.length && !group.use && !group["include-all"] && !group["include-all-proxies"] && !group["include-all-providers"] && !group["empty-fallback"]) group.proxies = ["DIRECT"];
   groups.push(group);
 }
 
 function makeGroups(source) {
+  // Split the sources: materialize inline nodes in JS and use Mihomo provider filtering for deferred nodes.
+  const inlineProxies = Array.isArray(source.proxies)
+    ? source.proxies.filter(x => isObject(x) && typeof x.name === "string" && x.name)
+    : [];
   const providerNames = isObject(source["proxy-providers"])
     ? Object.keys(source["proxy-providers"])
     : [];
-  const inlineNodeNames = Array.isArray(source.proxies)
-    ? source.proxies.filter(n => isObject(n) && typeof n.name === "string").map(n => n.name)
-    : [];
-
   const groups = [];
   const add = (name, type, proxies = [], options = {}) =>
     addGroup(groups, name, type, proxies, options);
-
-  // 服务组严格按 Loon 的默认选项顺序。
-  add("节点选择", "select", ["命悬一线", "大碗", "US", "HK", "TW", "JP", "KR", "SG", "ALL_Filter", "DIRECT"]);
-  add("OpenAI", "select", ["JP", "节点选择", "US", "SG"]);
-  add("Anthropic", "select", ["US", "节点选择", "SG", "JP"]);
-  add("Gemini", "select", ["US", "节点选择", "SG", "JP"]);
-  add("Grok", "select", ["US", "节点选择", "SG", "JP"]);
-  add("Linux.do", "select", ["节点选择", "JP", "US", "SG", "KR", "HK", "TW"]);
-  add("YouTube", "select", ["大碗", "节点选择"]);
-  add("Telegram", "select", ["DIRECT", "大碗", "节点选择", "US"]);
-
-  // 自动加载由 Mihomo 内核完成，不能根据 JS 阶段 proxies 数组的数量判断节点是否为空。
-  const common = { "include-all": true, "exclude-type": "direct", "empty-fallback": "COMPATIBLE" };
-  const normalExclude = "(?i)" + LOON.excludePattern;
-  add("ALL_Filter", "select", [], {
-    ...common, filter: ".*", "exclude-filter": normalExclude
-  });
-  add("命悬一线", "url-test", [], {
-    ...common, filter: ".*", "exclude-filter": normalExclude,
-    interval: 600, tolerance: 50
-  });
-
-  // 重要：Loon 的地区过滤器只排除 [free] 和 IPLC；
-  // 不能像旧版那样误用 ALL_Filter 的宽泛 excludePattern，否则会漏掉大量地区节点。
-  const regionExclude = "(?i)IPLC|\\[free\\]";
-  const regionOptions = (key) => ({
-    ...common, filter: "(?i)" + LOON.regionPattern[key],
-    "exclude-filter": regionExclude
-  });
-  for (const name of ["JP", "HK", "TW", "KR", "SG"]) {
-    add(name, name === "KR" ? "select" : "url-test", [], {
-      ...regionOptions(name),
-      ...(name === "KR" ? {} : { interval: 600, tolerance: name === "TW" ? 30 : 50 })
+  function pick(pattern, excluded = "") {
+    const include = new RegExp(pattern, "i");
+    const exclude = excluded ? new RegExp(excluded, "i") : null;
+    return distinct(inlineProxies.map(x => x.name).filter(name =>
+      include.test(name) && !(exclude && exclude.test(name))));
+  }
+  // Explicit proxies are selected by JS; provider nodes by native use + filter.
+  function addFiltered(name, type, pattern, excluded, options = {}) {
+    const entries = pick(pattern, excluded);
+    const providerOptions = providerNames.length
+      ? { use: providerNames.slice(), filter: "(?i)" + pattern,
+          ...(excluded ? { "exclude-filter": "(?i)" + excluded } : {}) }
+      : {};
+    add(name, type, entries, {
+      "empty-fallback": "COMPATIBLE",
+      ...providerOptions, ...options
     });
   }
+  add("节点选择", "select", ["命悬一线","大碗","US","HK","TW","JP","KR","SG","ALL_Filter","DIRECT"]);
+  add("OpenAI", "select", ["JP","节点选择","US","SG"]);
+  add("Anthropic", "select", ["US","节点选择","SG","JP"]);
+  add("Gemini", "select", ["US","节点选择","SG","JP"]);
+  add("Grok", "select", ["US","节点选择","SG","JP"]);
+  add("Linux.do", "select", ["节点选择","JP","US","SG","KR","HK","TW"]);
+  add("YouTube", "select", ["大碗","节点选择"]);
+  add("Telegram", "select", ["DIRECT","大碗","节点选择","US"]);
 
-  // 仅在可识别出 RackNerd 的提供者/节点时让 US 优先尝试它。
-  // 不凭空把一个无节点的 RackNerd 组放到 US 组最前面。
-  const rackProviders = providerNames.filter(n => /rack[ _-]?nerd/i.test(n));
-  const hasRackNode = inlineNodeNames.some(n => /rack[ _-]?nerd/i.test(n));
-  if (rackProviders.length) {
-    add("RackNerd", "url-test", [], {
-      use: rackProviders, "exclude-filter": regionExclude,
-      "empty-fallback": "COMPATIBLE", interval: 300, tolerance: 50
-    });
-  } else {
-    add("RackNerd", "url-test", [], {
-      ...common, filter: "(?i)Rack[ _-]?Nerd", "exclude-filter": regionExclude,
-      interval: 300, tolerance: 50
-    });
+  const normalExclude = LOON.excludePattern;
+  const regionExclude = "IPLC|\\[free\\]";
+  addFiltered("ALL_Filter", "select", ".*", normalExclude);
+  addFiltered("命悬一线", "url-test", ".*", normalExclude,
+    { interval: 600, tolerance: 50 });
+  for (const name of ["JP","HK","TW","KR","SG"]) {
+    addFiltered(name, name === "KR" ? "select" : "url-test",
+      LOON.regionPattern[name], regionExclude,
+      name === "KR" ? {} : { interval: 600, tolerance: name === "TW" ? 30 : 50 });
   }
-  add("US", "fallback", rackProviders.length || hasRackNode ? ["RackNerd"] : [], {
-    ...regionOptions("US"), interval: 600
+  const rackProviders = providerNames.filter(name => /rack[\s_-]?nerd/i.test(name));
+  const rackInline = pick("rack[\\s_-]?nerd", regionExclude);
+  const rackOptions = rackProviders.length
+    ? { use: rackProviders }
+    : providerNames.length
+      ? { use: providerNames, filter: "(?i)rack[\\s_-]?nerd",
+          "exclude-filter": "(?i)" + regionExclude }
+      : {};
+  add("RackNerd", "url-test", rackInline, {
+    "empty-fallback": "COMPATIBLE", interval: 300, tolerance: 50, ...rackOptions
   });
+  const rackSelected = rackProviders.length > 0 || rackInline.length > 0;
+  const usNodes = pick(LOON.regionPattern.US, regionExclude);
+  const usOptions = providerNames.length
+    ? { use: providerNames, filter: "(?i)" + LOON.regionPattern.US,
+        "exclude-filter": "(?i)" + regionExclude }
+    : {};
+  add("US", "fallback", distinct([
+    ...(rackSelected ? ["RackNerd"] : []), ...usNodes
+  ]), { "empty-fallback": "COMPATIBLE", interval: 600, ...usOptions });
 
-  // 免费节点独立匹配，仅当 [free] 组失效后才使用常规节点。
-  add("FREE_Filter", "url-test", [], {
-    ...common, filter: "(?i)\\[free\\]",
-    "empty-fallback": "REJECT", hidden: true,
-    icon: ICONS["大碗"], interval: 300, tolerance: 50
+  addFiltered("FREE_Filter", "url-test", "\\[free\\]", "", {
+    "empty-fallback": "REJECT", interval: 300, tolerance: 50,
+    hidden: true, icon: ICONS["大碗"]
   });
   add("大碗", "fallback", ["FREE_Filter", "命悬一线"], { interval: 300 });
-  add("兜底后备策略", "fallback", ["HK", "TW", "JP", "KR", "SG", "US", "命悬一线"], { interval: 60 });
+  add("兜底后备策略", "fallback",
+    ["HK","TW","JP","KR","SG","US","命悬一线"], { interval: 60 });
   return groups;
 }
 
@@ -224,6 +226,22 @@ function makeRules(hasAdBlock, hasGfwList) {
 
 function main(config) {
   if (!isObject(config)) throw new Error("Clash Party 覆写需要配置对象");
+  // Safeguard: never replace original working groups when no node sources are visible.
+  const inlineCount = Array.isArray(config.proxies) ? config.proxies.length : 0;
+  const providerCount = isObject(config["proxy-providers"])
+    ? Object.keys(config["proxy-providers"]).length : 0;
+  const originalGroupCount = Array.isArray(config["proxy-groups"]) ? config["proxy-groups"].length : 0;
+  if (typeof console !== "undefined" && console.log) {
+    console.log("[Loon-override] input " + JSON.stringify({
+      inlineCount, providerCount, originalGroupCount
+    }));
+  }
+  if (inlineCount === 0 && providerCount === 0) {
+    if (typeof console !== "undefined" && console.log) {
+      console.log("[Loon-override] no node source; retaining original config");
+    }
+    return config;
+  }
   const result = { ...config };
   const providers = isObject(config["rule-providers"]) ? { ...config["rule-providers"] } : {};
   // 公开规则来源；按原版 MIT 项目使用的 provider 格式（不复制 Loon .list 私有订阅）。
