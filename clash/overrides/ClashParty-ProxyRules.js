@@ -27,6 +27,8 @@ const LOON = {
   },
   // 与 Loon 中的免费/IPLC/订阅信息过滤方式相近；不使用 Go RE2 不支持的环视语法。
   freePattern: "\\[free\\]",
+  // 命悬一线仅排除 Loon 明确区分的免费/IPLC；不再误伤带“套餐/流量”等字样的正常节点。
+  autoExcludePattern: "\\[free\\]|IPLC",
   excludePattern: "\\[free\\]|IPLC|官网|客服|网站|网址|订阅|流量|到期|过期|已用|邀请|返利|邮箱|工单|通知|频道|交流群|教程|联系|剩余|提示|套餐|((USE|USED|TOTAL|EXPIRE|EMAIL|Traffic)[0-9]*)",
   localDirect: [
     "DOMAIN-SUFFIX,linuxdo.org,DIRECT",
@@ -156,8 +158,17 @@ function makeGroups(source) {
   const normalExclude = LOON.excludePattern;
   const regionExclude = "IPLC|\\[free\\]";
   addFiltered("ALL_Filter", "select", ".*", normalExclude);
-  addFiltered("命悬一线", "url-test", ".*", normalExclude,
-    { interval: 600, tolerance: 50 });
+  // 与 GLOBAL 的普通节点来源对齐：显式节点 + 所有已声明的 Provider。
+  // 额外 include-all-proxies 可覆盖 JS 阶段未看到、但内核已加载的顶层代理。
+  // 注意这仍不同于 GLOBAL（后者还包含策略组以及 free/IPLC 等特殊节点）。
+  addFiltered("命悬一线", "url-test", ".*", LOON.autoExcludePattern,
+    {
+      interval: 600, tolerance: 50,
+      "include-all-proxies": true,
+      filter: "(?i).*",
+      "exclude-filter": "(?i)" + LOON.autoExcludePattern,
+      "exclude-type": "direct"
+    });
   for (const name of ["JP","HK","TW","KR","SG"]) {
     addFiltered(name, name === "KR" ? "select" : "url-test",
       LOON.regionPattern[name], regionExclude,
