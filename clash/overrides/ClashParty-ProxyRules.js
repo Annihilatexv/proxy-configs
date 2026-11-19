@@ -25,11 +25,11 @@ const LOON = {
     KR: "韩国|韓國|韩|韓|首尔|首爾|仁川|釜山|春川|大邱|大田|济州|濟州|Korea|South Korea|SouthKorea|Seoul|Incheon|Busan|Chuncheon|Jeju|(?:^|[^A-Za-z])(?:KR|KOR|ICN|GMP|PUS|CJU)(?:[0-9]+|[^A-Za-z]|$)|🇰🇷",
     SG: "新加坡|星加坡|狮城|獅城|坡|樟宜|新国|新國|Singapore|Singapura|Changi|(?:^|[^A-Za-z])(?:SG|SGP|SIN)(?:[0-9]+|[^A-Za-z]|$)|🇸🇬"
   },
-  // 与 Loon 中的免费/IPLC/订阅信息过滤方式相近；不使用 Go RE2 不支持的环视语法。
+  // 不排除 IPLC：只对免费节点及订阅状态文本做特殊处理。
   freePattern: "\\[free\\]",
-  // 命悬一线仅排除 Loon 明确区分的免费/IPLC；不再误伤带“套餐/流量”等字样的正常节点。
-  autoExcludePattern: "\\[free\\]|IPLC",
-  excludePattern: "\\[free\\]|IPLC|官网|客服|网站|网址|订阅|流量|到期|过期|已用|邀请|返利|邮箱|工单|通知|频道|交流群|教程|联系|剩余|提示|套餐|((USE|USED|TOTAL|EXPIRE|EMAIL|Traffic)[0-9]*)",
+  // 命悬一线保留普通节点与 IPLC；仅把 [free] 留给免费策略组。
+  autoExcludePattern: "\\[free\\]",
+  excludePattern: "\\[free\\]|官网|客服|网站|网址|订阅|流量|到期|过期|已用|邀请|返利|邮箱|工单|通知|频道|交流群|教程|联系|剩余|提示|套餐|((USE|USED|TOTAL|EXPIRE|EMAIL|Traffic)[0-9]*)",
   localDirect: [
     "DOMAIN-SUFFIX,linuxdo.org,DIRECT",
     "DOMAIN-SUFFIX,speedtest.net,DIRECT",
@@ -156,11 +156,11 @@ function makeGroups(source) {
   add("Telegram", "select", ["DIRECT","大碗","节点选择","US"]);
 
   const normalExclude = LOON.excludePattern;
-  const regionExclude = "IPLC|\\[free\\]";
+  const regionExclude = "\\[free\\]";
   addFiltered("ALL_Filter", "select", ".*", normalExclude);
   // 与 GLOBAL 的普通节点来源对齐：显式节点 + 所有已声明的 Provider。
   // 额外 include-all-proxies 可覆盖 JS 阶段未看到、但内核已加载的顶层代理。
-  // 注意这仍不同于 GLOBAL（后者还包含策略组以及 free/IPLC 等特殊节点）。
+  // 注意这仍不同于 GLOBAL（后者还包含策略组及 [free] 等特殊节点）。
   addFiltered("命悬一线", "url-test", ".*", LOON.autoExcludePattern,
     {
       interval: 600, tolerance: 50,
