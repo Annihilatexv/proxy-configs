@@ -75,4 +75,40 @@ for (const cfg of tests) {
   }
   assert.ok(!byName["加密货币"]&&!byName["静态资源"]);
 }
+
+// Chinese simplified/traditional and protocol-prefixed node names must be recognized.
+// These are synthetic examples, not actual subscription credentials.
+const chineseCases=[
+  ["TW","VLESS-台湾家宽"],["TW","VLESS-臺灣家寬"],
+  ["TW","Hysteria2-台北01"],["TW","Trojan-臺北家寬"],
+  ["HK","Trojan-香港家宽"],["HK","香港原生IP"],["HK","九龍 HKG-02"],
+  ["JP","VLESS-日本家宽"],["JP","東京原生-01"],["JP","Kansai-NRT"],
+  ["KR","VLESS-韩国家宽"],["KR","首爾家寬"],
+  ["SG","VLESS-新加坡家宽"],["SG","狮城高端-02"],["SG","SIN-01"],
+  ["US","VLESS-美国家宽"],["US","舊金山01"],["US","USA-01"]
+];
+const negativeCases=[
+  ["TW","Thailand-01"],["US","AUS01"],["JP","JJPPremium01"],
+  ["SG","Single-01"],["HK","THK01"],
+  ["TW","VLESS-IPLC-台湾家宽"],["TW","VLESS-[free]-台湾家宽"]
+];
+const providerSample=context.main({
+  "proxy-providers": { Airport: { type:"http",url:"https://example.invalid/a.yaml" } }
+});
+const providerGroups=Object.fromEntries(providerSample["proxy-groups"].map(g=>[g.name,g]));
+for(const [region,name] of chineseCases){
+  const inline=context.main({proxies:[{name,type:"vless"}]});
+  assert.ok(inline["proxy-groups"].find(g=>g.name===region).proxies.includes(name),
+    region+" should match "+name);
+  const providerGroup=providerGroups[region];
+  const pattern=new RegExp(providerGroup.filter.replace(/^\(\?i\)/,""),"i");
+  assert.ok(pattern.test(name),region+" provider should match "+name);
+}
+for(const [region,name] of negativeCases){
+  const inline=context.main({proxies:[{name,type:"vless"}]});
+  assert.ok(!inline["proxy-groups"].find(g=>g.name===region).proxies.includes(name),
+    region+" should exclude "+name);
+}
+console.log("PASS: Chinese simplified/traditional, protocol prefixes, provider regex and boundary negatives");
+
 console.log("PASS: 6 inputs; regions, providers, optional FREE_Filter, and every group has proxies/use");
