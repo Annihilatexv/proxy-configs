@@ -53,6 +53,24 @@
 
 **检查方式：** 刷新 JavaScript 覆写、刷新订阅、重新应用。若某些节点仍缺失，请仅提供节点名称（可隐藏 IP、服务器地址、订阅 URL、Token），我们可据此针对具体命名完善地区表达式。
 
+## 2026-11-19 节点分组再次修复：改为双路径获取
+
+**用户实测**：不开启覆写时原订阅能正常显示节点；开启后 HK 仅有少量节点，TW/KR/SG 等显示 `COMPATIBLE`。Mihomo 官方文档表明 `COMPATIBLE` 是没有候选节点时的默认回退，并非实际代理。
+
+**上一版问题**：原脚本用全新 `proxy-groups` 覆盖订阅的原策略组，再完全依赖 `include-all + filter` 在后续阶段重新找节点。即使配置来源是有效的，在客户端的实际合并/加载结构中也可能丢失原来显式列出的候选节点。仅凭 JavaScript 静态正则匹配成功，不能证明 Mihomo 已加载节点。
+
+**当前改动（GitHub Raw 地址不变）：**
+
+1. 对当前配置中已显式存在于 `proxies` 数组里的节点，JavaScript 立即用 Loon 风格地区正则筛选，直接写到各地区策略组的 `proxies` 列表，不再完全依赖运行时动态注入。
+2. 对 `proxy-providers`，使用官方支持的 `use: [provider-name]` 加 `filter`、`exclude-filter`，交给 Mihomo 内核加载。此处 `filter` 仅筛选 provider 节点，不会改变 JS 已经筛出的显式节点。
+3. 如果 JS 阶段读取到 0 个顶层节点并且 0 个 provider，则保留原始配置，不再强制覆盖成空组。
+4. 不上传真实节点、订阅 URL、密钥。脚本执行时仅在 JavaScript 覆写日志中输出 `[Loon-override] input {"inlineCount":...,"providerCount":...,"originalGroupCount":...}`，这几个计数可用于判断来源结构，无须泄露敏感信息。
+5. 继续保留全部 18 个 Loon 策略组、`ALL_Filter` 和隐藏的 `FREE_Filter`，地区排除规则仍为 `IPLC|[free]`。
+
+**验证**：已使用构造的内联节点、纯 provider、混合来源和空配置运行 JS 模拟测试，检查地区组返回的显式节点或 provider 引用及策略组依赖。新增/更新 `tests/region-matching.test.cjs` 回归脚本。**尚未在用户的真实 Clash Party / Mihomo 内核中测试成功**，需要刷新并重新应用配置以检查。
+
+**日志位置**：在 Clash Party 的「覆写」页面，找到该 JavaScript 覆写的菜单/执行日志，查看 `[Loon-override] input`。日志只有数量，没有节点名和订阅地址。如果仍然缺节点，请分享这行计数信息以及地区组的实际显示状态。
+
 ## 分流规则
 
 以 Loon 的实际政策为准：OpenAI、Anthropic、Gemini、Grok、YouTube、Telegram 各自分流；PikPak / Twitter 等走「节点选择」；国内流量尽量直连；其余流量走「兜底后备策略」。保留 Loon 中已使用的少量网站直连/代理例外、DNS IPv6 关闭及基础 SNI 嗅探设置。
