@@ -257,6 +257,16 @@ function main(config) {
   };
   result["rule-providers"] = providers;
   result["proxy-groups"] = makeGroups(config);
+  if (typeof console !== "undefined" && console.log) {
+    const regionNames = ["JP", "HK", "TW", "KR", "SG", "US", "ALL_Filter", "命悬一线"];
+    const groupStats = {};
+    for (const g of result["proxy-groups"]) {
+      if (regionNames.includes(g.name)) {
+        groupStats[g.name] = { explicit: g.proxies?.length || 0, providerRefs: g.use?.length || 0 };
+      }
+    }
+    console.log("[Loon-override] group source counts " + JSON.stringify(groupStats));
+  }
   result.rules = makeRules(true, true);
   result.mode = "rule";
   result.ipv6 = false;
