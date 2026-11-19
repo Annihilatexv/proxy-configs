@@ -111,4 +111,43 @@ for(const [region,name] of negativeCases){
 }
 console.log("PASS: Chinese simplified/traditional, protocol prefixes, provider regex and boundary negatives");
 
+
+// Regress against GLOBAL vs 命悬一线 missing normal nodes. Unlike the
+// strict Loon ALL_Filter, the auto group must retain actual endpoints even
+// when their names contain plan/traffic/website words.
+const autoCandidates = [
+  "VLESS-台湾家宽-套餐A",
+  "香港高速-流量加速 01",
+  "🇯🇵 东京-住宅 IP",
+  "US-03",
+  "SG-SIN01",
+  "Telegram 专线",
+  "🇹🇼 台北机场节点",
+  "Hysteria2-香港-官网节点",
+  "US-客服转发专用线路",
+  "IPLC-日本01",
+  "[free] 香港"
+];
+const autoCfg = context.main({proxies: autoCandidates.map(name=>({name,type:"ss"}))});
+const autoGroups = Object.fromEntries(autoCfg["proxy-groups"].map(g=>[g.name,g]));
+const auto = autoGroups["命悬一线"];
+const strict = autoGroups.ALL_Filter;
+assert.ok(auto["include-all-proxies"] === true, "auto should include loaded outbound proxies");
+assert.equal(auto["exclude-filter"], "(?i)\\[free\\]|IPLC");
+assert.equal(auto.filter, "(?i).*");
+assert.equal(auto.proxies.length,autoCandidates.length - 2);
+assert.ok(!auto.proxies.includes("IPLC-日本01"));
+assert.ok(!auto.proxies.includes("[free] 香港"));
+assert.ok(strict.proxies.length < auto.proxies.length);
+for (const name of autoCandidates.slice(0,9)) {
+  assert.ok(auto.proxies.includes(name), "auto missing normal node " + name);
+}
+const autoProviderCfg=context.main({
+  "proxy-providers": {Airport: {type:"http",url:"https://example.invalid/test.yaml"}}
+});
+const autoProvider=autoProviderCfg["proxy-groups"].find(g=>g.name==="命悬一线");
+assert.ok(autoProvider["include-all-proxies"]);
+assert.equal(autoProvider.use.join(","),"Airport");
+console.log("PASS: auto group keeps 9 normal nodes despite plan/traffic labels; excludes only [free]/IPLC");
+
 console.log("PASS: 6 inputs; regions, providers, optional FREE_Filter, and every group has proxies/use");
