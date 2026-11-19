@@ -42,7 +42,21 @@ https://raw.githubusercontent.com/Annihilatexv/proxy-configs/main/clash/override
 | 大碗 | 免费节点组失败后转用命悬一线 |
 | 兜底后备策略 | HK、TW、JP、KR、SG、US、命悬一线 |
 
-保留 Loon 的 18 个可见服务/地区策略组、一个 ALL_Filter 辅助选择组及一个隐藏的 FREE_Filter 辅助健康检查组；生成总数 20。所有策略组含图标。
+保留 Loon 的 18 个策略组以及一个 ALL_Filter 辅助组；**只有检测到 [free] 节点或存在 proxy-providers 时才创建隐藏的 FREE_Filter**。因此总数为 19 或 20 组（视订阅而定）。所有生成的组均有图标和有效节点/Provider 来源。
+
+## 2026-11-19 修复：FREE_Filter 缺少 proxies/use
+
+**错误：** `proxy group[1]: FREE_Filter: use or proxies missing`。
+
+**原因：** 订阅没有匹配到 `[free]` 普通节点、又没有可引用的 Provider 时，旧逻辑仍创建 `FREE_Filter`，只写 `proxies: []`。Mihomo 要求每个策略组具有至少一个非空的 `proxies` 或 `use` 来源。`empty-fallback` 只规定运行时空组的回退节点，不能替代 `proxies/use` 来通过配置解析。
+
+**处理：**
+- 如果没有 `[free]` 节点且不存在 Provider，则不创建 `FREE_Filter`，`大碗` 直接使用 `命悬一线`。
+- 如果有 `[free]` 节点或 Provider，则保留 `FREE_Filter`，并使用明确的节点列表或 `use`。
+- 对其他缺少来源的地区组添加 `命悬一线` 回退引用；`ALL_Filter` 和 `命悬一线` 在完全无合格代理时回退 `DIRECT`，保证 Mihomo 配置至少可解析。
+- 新增严格的回归断言：**每个生成的 proxy-group 都必须满足 `proxies.length > 0 || use.length > 0`**。测试了普通节点（有/无免费）、只有免费节点、纯 Provider、混合、空配置共六种情形。
+
+仍需在真实 Clash Party 客户端重新载入测试；单元测试通过并不等于内核配置解析通过。
 
 ## 安全诊断日志（仅计数）
 
