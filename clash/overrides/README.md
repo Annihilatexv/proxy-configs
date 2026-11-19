@@ -58,6 +58,18 @@ https://raw.githubusercontent.com/Annihilatexv/proxy-configs/main/clash/override
 
 仍需在真实 Clash Party 客户端重新载入测试；单元测试通过并不等于内核配置解析通过。
 
+## 地区中文关键词增强（2026-11-19）
+
+地区筛选已补充 **简体与繁体中文**，可以识别带任意协议和线路前后缀的名称，例如 `VLESS-台湾家宽`、`VLESS-臺灣家寬`、`Trojan-香港家宽`、`VLESS-日本家宽`、`VLESS-美国家宽` 等。
+
+同时保留 Loon 的基本中文词，补充首尔/首爾、东京/東京、台北/臺北、九龍/九龙、舊金山/旧金山等地区别名，以及常用英文城市、机场代码、国旗。
+
+英文地区和机场缩写设置非字母边界，减少 `SIN` 误命中 `Single`、`US` 误命中 `AUS`。JP/HK/TW/KR/SG/US 仍只排除 `IPLC` 与 `[free]`；通用 ALL_Filter 和命悬一线继续使用更严格的排除规则。
+
+回归测试增加中文简繁体、协议前缀、Provider 正则和误判测试，均以合成名称运行，不涉及私人机场数据。
+
+**重要：** 如果 `VLESS-台湾家宽` 仍然不出现在 TW，说明需要进一步检查覆写日志中该组的 `explicit` 和 `providerRefs`，而非继续盲目添加关键词。模拟测试无法保证 Clash Party 中的实际节点来源已经完整载入。
+
 ## 安全诊断日志（仅计数）
 
 脚本会在 Clash Party 的 **JavaScript 覆写执行日志** 中输出两条以 Loon-override 开头的信息，例如：
