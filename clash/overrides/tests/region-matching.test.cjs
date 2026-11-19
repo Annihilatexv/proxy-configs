@@ -61,7 +61,7 @@ for (const [index, config] of cases.entries()) {
       assert.deepEqual(hits, intendedRegion ? [intendedRegion] : [], name);
     }
   }
-  if (index === 1) assert.deepEqual(map.US.proxies, []);
+  if (index === 1) assert.deepEqual(Array.from(map.US.proxies), []);
   if (index === 2) assert.equal(map.RackNerd.use.join(","), "RackNerd");
 }
 console.log("PASS: 4 source shapes, 9 node-name samples, valid groups/icons and Loon region exclusions");
