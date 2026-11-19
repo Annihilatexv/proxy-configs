@@ -58,7 +58,7 @@ for (const config of configs) {
   for (const [region,expected] of Object.entries(geo)) {
     const g = groupMap[region];
     if (config.name === "inline") {
-      const actuallyListed = g.proxies.filter(p => nodes.includes(p));
+      const actuallyListed = Array.from(g.proxies).filter(p => nodes.includes(p));
       assert.deepEqual(actuallyListed, expected, region);
       assert.ok(!g.use);
     } else if (config.name === "provider") {
