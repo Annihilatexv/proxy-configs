@@ -15,14 +15,15 @@
 
 const LOON = {
   testUrl: "https://cp.cloudflare.com/generate_204",
+  // 与 Loon 兼容：中文简繁体（含 VLESS-台湾家宽 等前后缀）、城市、机场码及国旗。
+  // 英文缩写/机场代码需非字母边界，避免 SIN 误命中 Single、US 误命中 AUS。
   regionPattern: {
-    // 保留 Loon 的中文/英文匹配，并补充常见机场代码与国旗。
-    JP: "日本|川日|东京|大阪|泉日|埼玉|沪日|深日|JP|Japan|JPN|Tokyo|Osaka|NRT|HND|KIX|TYO|OSA|🇯🇵",
-    US: "美|波特兰|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|圣何塞|圣克拉拉|西雅图|芝加哥|US|USA|United States|America|LAX|SFO|JFK|SEA|NYC|🇺🇸",
-    HK: "港|HK|Hong|HKG|Kowloon|🇭🇰",
-    TW: "台|TW|Tai|TPE|TWN|🇹🇼",
-    KR: "KR|Korea|KOR|首尔|韩|韓|Seoul|ICN|🇰🇷",
-    SG: "新加坡|坡|狮城|SG|Singapore|SIN|🇸🇬"
+    JP: "日本|川日|东京|東京|大阪|泉日|埼玉|沪日|深日|关西|關西|京都|名古屋|北海道|札幌|福冈|福岡|冲绳|沖繩|横滨|橫濱|神户|神戶|千叶|千葉|Japan|Japanese|Tokyo|Osaka|Kansai|Kyoto|Nagoya|Sapporo|Fukuoka|Yokohama|Okinawa|(?:^|[^A-Za-z])(?:JP|JPN|NRT|HND|KIX|ITM|NGO|FUK|CTS|TYO|OSA)(?:[0-9]+|[^A-Za-z]|$)|🇯🇵",
+    US: "美国|美國|美|波特兰|波特蘭|达拉斯|達拉斯|俄勒冈|俄勒岡|凤凰城|鳳凰城|费利蒙|費利蒙|硅谷|矽谷|拉斯维加斯|拉斯維加斯|洛杉矶|洛杉磯|圣何塞|聖荷西|圣克拉拉|聖克拉拉|西雅图|西雅圖|芝加哥|纽约|紐約|旧金山|舊金山|迈阿密|邁阿密|亚特兰大|亞特蘭大|华盛顿|華盛頓|波士顿|波士頓|休斯敦|休士頓|United States|UnitedStates|United_States|United-States|America|American|Los Angeles|New York|Seattle|San Francisco|Silicon Valley|Chicago|Dallas|Portland|Las Vegas|Washington|Boston|Miami|Houston|Atlanta|Phoenix|(?:^|[^A-Za-z])(?:US|USA|NYC|LAX|SFO|SEA|SJC|EWR|DFW|ATL|JFK|IAD|ORD|MIA|SLC|PDX|LAS|BOS)(?:[0-9]+|[^A-Za-z]|$)|🇺🇸",
+    HK: "香港|港|深港|九龙|九龍|新界|沙田|荃湾|荃灣|葵涌|湾仔|灣仔|将军澳|將軍澳|观塘|觀塘|九龙湾|九龍灣|Hong Kong|HongKong|Hong_Kong|Hong-Kong|Kowloon|(?:^|[^A-Za-z])(?:HK|HKG)(?:[0-9]+|[^A-Za-z]|$)|🇭🇰",
+    TW: "台湾|台灣|臺灣|台|臺北|台北|新北|台中|臺中|台南|臺南|高雄|桃园|桃園|彰化|基隆|Taiwan|Taipei|Taichung|Tainan|Kaohsiung|Taoyuan|(?:^|[^A-Za-z])(?:TW|TWN|TPE|KHH|ROC|Tai)(?:[0-9]+|[^A-Za-z]|$)|🇹🇼",
+    KR: "韩国|韓國|韩|韓|首尔|首爾|仁川|釜山|春川|大邱|大田|济州|濟州|Korea|South Korea|SouthKorea|Seoul|Incheon|Busan|Chuncheon|Jeju|(?:^|[^A-Za-z])(?:KR|KOR|ICN|GMP|PUS|CJU)(?:[0-9]+|[^A-Za-z]|$)|🇰🇷",
+    SG: "新加坡|星加坡|狮城|獅城|坡|樟宜|新国|新國|Singapore|Singapura|Changi|(?:^|[^A-Za-z])(?:SG|SGP|SIN)(?:[0-9]+|[^A-Za-z]|$)|🇸🇬"
   },
   // 与 Loon 中的免费/IPLC/订阅信息过滤方式相近；不使用 Go RE2 不支持的环视语法。
   freePattern: "\\[free\\]",
